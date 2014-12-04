@@ -1,5 +1,5 @@
-var _ = require('./shared/underscore');
-var r = require('./redisClient');
+var _ = require('./../shared/underscore');
+var services = require('./serviceManager');
 
 function RedisDocumentWrapper(name) {
     var redisDocumentWrapperThis = this;
@@ -23,10 +23,10 @@ RedisDocumentWrapper.prototype.getPropertyName = function(property) {
     return this.documentName + "_" + property;
 };
 RedisDocumentWrapper.prototype.lock = function(task) {
-    r.lock(this.getPropertyName('lock'), task);
+    services.redisClient.lock(this.getPropertyName('lock'), task);
 };
 RedisDocumentWrapper.prototype.subscribe = function(listener) {
-    r.subscribe(this.propertyNames.stream, listener);
+    services.redisClient.subscribe(this.propertyNames.stream, listener);
 };
 
 module.exports = RedisDocumentWrapper;

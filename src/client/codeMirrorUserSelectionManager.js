@@ -15,7 +15,7 @@ function CodeMirrorUserSelection(cm) {
     });
 
 
-    console.log("yee");
+    //console.log("yee");
 }
 
 CodeMirrorUserSelection.prototype.makeCursor = function() {

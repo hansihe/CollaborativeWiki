@@ -2,49 +2,44 @@
 var react = require('react');
 React = react;
 var shoe = require('shoe');
-var Stream = require('../shared/networkChannel');
-var DocumentClientManager = require('./documentClientManager');
 var _ = require('../shared/underscore');
-var eventAliases = require('../shared/eventAliases');
 
 var ot = require('ot');
 var CodeMirrorAdapter = require('./codemirror-adapter');
+var ClientStateManager = require('./ClientStateManager');
 
 var CodeMirrorComponent = require('./react_components/codemirror');
 var CodeMirrorUserSelectionManager = require('./codeMirrorUserSelectionManager');
 require('codemirror/mode/markdown/markdown');
 // End imports
 
-var documentClientManager = new DocumentClientManager();
-
-var sock = shoe('/endpoint');
-var stream = new Stream(sock, {
-    test: function(callback) {
-        callback(function() {
-            console.log("Success: server -> client -> server -> client");
-        });
-    }
-});
-
-stream.on('remote', function(remote) {
-    console.log('remote');
-    documentClientManager.serverConnected(stream);
-});
-stream.on('end', function() {
-    console.log('end');
-    documentClientManager.serverDisconnected();
-});
 
 
+
+
+/*
+Client:
+ClientStateManager
+ - NetworkChannel
+ - DocumentClientManager
+   - DocumentClient
+
+Server:
+
+ */
+
+var clientStateManager = new ClientStateManager();
 
 var onCreateCodeMirror = function(editor) {
+    var documentClientManager = clientStateManager.documentClientManager;
+
     var channel = documentClientManager.requestClient("testDocument");
     var adapter = new CodeMirrorAdapter(editor);
     new CodeMirrorUserSelectionManager(editor);
     adapter.registerCallbacks({
         change: function(operation, inverse) {
             if (t) {
-                channel.applyChange(operation);
+                channel.performClientOperation(operation);
             }
         }
     });

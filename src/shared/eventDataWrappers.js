@@ -1,25 +1,44 @@
 var _ = require('../shared/underscore');
 
 function DataWrapper(fields) {
-    this.fields = fields || [];
+    this.fields = fields;
 }
 
-BaseDataWrapper.prototype.toJSON = function() {
-    var dataWrapperThis = this;
-
+DataWrapper.prototype.pack = function() {
     var result = [];
-    _.forEach(this.fields, function(name) {
-        result.push(dataWrapperThis[name]);
+
+    _.forEach(this.fields, function(name, index) {
+        result.push(arguments[index]);
     });
 
     return result;
 };
 
-BaseDataWrapper.fromJSON = function() {
-    var dataWrapperThis = this;
+DataWrapper.prototype.packObject = function(object) {
+    var result = [];
 
+    _.forEach(this.fields, function(name) {
+        result.push(object[name]);
+    });
+
+    return result;
 };
 
-function makeDataWrapper() {
+DataWrapper.prototype.unpack = function(repr) {
+    var result = {};
 
-}
+    _.forEach(this.fields, function(name, index) {
+        result[name] = repr[index];
+    });
+
+    return result;
+};
+
+var operationDataWrapper = new DataWrapper(['documentId', 'userId', 'documentRevision', 'operation']);
+var selectionDataWrapper = new DataWrapper(['documentId', 'userId', 'selection']);
+
+module.exports = {
+    DataWrapper: DataWrapper,
+    operationDataWrapper: operationDataWrapper,
+    selectionDataWrapper: selectionDataWrapper
+};

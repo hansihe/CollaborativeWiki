@@ -39,4 +39,4 @@ RedisClient.prototype.lock = function(lockName, task) {
     this.redisLock(lockName, task);
 };
 
-module.exports = new RedisClient();
+module.exports = RedisClient;

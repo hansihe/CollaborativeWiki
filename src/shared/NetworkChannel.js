@@ -1,5 +1,5 @@
 var dnode = require('dnode');
-var PubSub = require('./pubsub');
+var PubSub = require('./PubSub');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var _ = require('./underscore');
@@ -33,10 +33,12 @@ function Stream(stream, rpcMethods) {
         streamThis._outQueue = [];
 
         streamThis.emit('remote', remote);
+        streamThis.emit('connected', streamThis);
     });
 
     this.rpc.on('end', function() {
         streamThis.emit('end');
+        streamThis.emit('disconnected');
     });
 
     this.rpc.pipe(stream).pipe(this.rpc);

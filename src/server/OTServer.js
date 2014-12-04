@@ -1,9 +1,9 @@
 var util = require('util');
 var otOrig = require('ot');
 var EventEmitter = require('events').EventEmitter;
-var _ = require('./underscore');
-var DocumentWrapper = require('../redisDocumentWrapper');
-var r = require('../redisClient');
+var _ = require('./../shared/underscore');
+var DocumentWrapper = require('./RedisDocumentWrapper');
+var services = require('./serviceManager');
 var ot = require('ot');
 
 function OTServer(name) {
@@ -19,7 +19,7 @@ OTServer.prototype.receiveOperation = function (revision, operation, additionalD
     var otThis = this;
 
     this.documentWrapper.lock(function(releaseLock) {
-        var multiRead = r.redisConnection.multi();
+        var multiRead = services.redisClient.redisConnection.multi();
 
         multiRead.get(otThis.documentWrapper.propertyNames.document);
         multiRead.llen(otThis.documentWrapper.propertyNames.operations);
@@ -48,7 +48,7 @@ OTServer.prototype.receiveOperation = function (revision, operation, additionalD
             // Store operation in history.
             //otThis.operations.push(operation.toJSON());
 
-            var multiWrite = r.redisConnection.multi();
+            var multiWrite = services.redisClient.redisConnection.multi();
             multiWrite.set(otThis.documentWrapper.propertyNames.document, document);
             multiWrite.rpush(otThis.documentWrapper.propertyNames.operations, operation.toJSON());
 
@@ -66,12 +66,4 @@ OTServer.prototype.receiveOperation = function (revision, operation, additionalD
     });
 };
 
-function OTClient() {
-    otOrig.Client.call(this);
-}
-util.inherits(OTClient, otOrig.Client);
-
-module.exports = {
-    Server: OTServer,
-    Client: OTClient
-};
+module.exports = OTServer;

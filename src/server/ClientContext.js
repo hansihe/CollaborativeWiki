@@ -1,9 +1,10 @@
-var OTServer = require('./shared/customOT').Server;
-var NetworkChannel = require('./shared/networkChannel');
+var OTServer = require('./OTServer');
+var NetworkChannel = require('./../shared/NetworkChannel');
 var ot = require('ot');
 var uuid = require('node-uuid');
-var r = require('./redisClient');
-var eventAliases = require('./shared/eventAliases');
+var services = require('./serviceManager');
+var eventAliases = require('./../shared/eventAliases');
+var eventDataWrappers = require('./../shared/eventDataWrappers');
 
 var tempDocuments = {
     testDocument: new OTServer("testDocumentWoo5")
@@ -19,14 +20,22 @@ function ClientContext(stream) {
     this.uuid = uuid.v4();
 
     this.channel = new NetworkChannel(stream, {
+        handshake: function(callback) {
+            callback(clientConnectionThis.uuid);
+        },
         initDocumentChannel: function(id, callback) {
             var document = tempDocuments[id];
 
             document.documentWrapper.subscribe(function(operation) {
-                clientConnectionThis.channel.pubsub.publish(eventAliases.documentOperation, operation.id, clientConnectionThis.uuid == operation.senderUUID, operation.revision, operation.operation);
+                clientConnectionThis.channel.pubsub.publish(eventAliases.documentOperation, eventDataWrappers.operationDataWrapper.packObject({
+                    documentId: id,
+                    userId: operation.senderUUID,
+                    documentRevision: operation.revision,
+                    operation: operation.operation
+                }));
             });
 
-            var multi = r.redisConnection.multi();
+            var multi = services.redisClient.redisConnection.multi();
 
             multi.get(document.documentWrapper.propertyNames['document']);
             multi.llen(document.documentWrapper.propertyNames['operations']);
@@ -47,11 +56,14 @@ function ClientContext(stream) {
     this.channel.on('remote', function(remote) {
         clientConnectionThis.debugLog("Connected");
 
-        clientConnectionThis.channel.pubsub.on(eventAliases.documentOperation, function(id, revision, rawOperation) { // OT operation receive
-            var document = tempDocuments[id];
-            var operation = ot.TextOperation.fromJSON(rawOperation);
-            document.receiveOperation(revision, operation, {
-                id: id,
+        clientConnectionThis.channel.pubsub.on(eventAliases.documentOperation, function(rawRepr) {//id, revision, rawOperation) { // OT operation receive
+            var operationInfo = eventDataWrappers.operationDataWrapper.unpack(rawRepr);
+
+            var document = tempDocuments[operationInfo.documentId];
+            var operation = ot.TextOperation.fromJSON(operationInfo.operation);
+
+            document.receiveOperation(operationInfo.documentRevision, operation, {
+                id: operationInfo.id,
                 senderUUID: clientConnectionThis.uuid
             });
         });
