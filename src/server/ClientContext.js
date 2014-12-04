@@ -67,6 +67,10 @@ function ClientContext(stream) {
                 senderUUID: clientConnectionThis.uuid
             });
         });
+        clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, function(rawRepr) {
+            var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(rawRepr);
+            console.log(JSON.stringify(selectionInfo));
+        });
     });
 }
 

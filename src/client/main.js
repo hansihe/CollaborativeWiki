@@ -55,10 +55,16 @@ var onCreateCodeMirror = function(editor) {
     });
 
     editor.on("beforeSelectionChange", function(cm, selections) {
-        var otRanges = _.map(selections.ranges, function(value) {
-            return {'anchor': cm.indexFromPos(value.anchor), 'head': cm.indexFromPos(value.head)};
+        var otRanges = [];
+        _.forEach(selections.ranges, function(value) {
+            otRanges.push({
+                anchor: cm.indexFromPos(value.anchor),
+                head: cm.indexFromPos(value.head)
+            });
         });
         var otSelection = {'ranges': otRanges};
+
+        channel.performSelection(otSelection);
         console.log(otSelection);
     });
 };

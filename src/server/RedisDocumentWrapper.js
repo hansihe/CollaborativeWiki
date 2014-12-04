@@ -10,7 +10,8 @@ function RedisDocumentWrapper(name) {
         document: 'documentText',
         operations: 'operations',
         lock: 'lock',
-        stream: 'operationStream'
+        stream: 'operationStream',
+        selectionStream: 'selectionStream'
     },
     function(result, value, key) {
         result[key] = redisDocumentWrapperThis.getPropertyName(value);

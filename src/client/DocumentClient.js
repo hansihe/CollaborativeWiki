@@ -36,11 +36,15 @@ DocumentClient.prototype.performClientOperation = function(operation) {
 };
 
 /**
- * Called by an editor when the cursors/selections changes.
+ * Called by an editor when the selection(s)/cursor(s) change.
  * Transmits the new state to the server.
  */
-DocumentClient.prototype.applySelection = function(selection) {
-    this.manager.networkChannel.publish(eventAliases.documentCursor, this.id, selection);
+DocumentClient.prototype.performSelection = function(selection) {
+    this.stateManager.networkChannel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
+        documentId: this.id,
+        userId: null, // No reason to transmit this, the server ignores it.
+        selection: selection
+    }));
 };
 
 DocumentClient.prototype.isConnected = function() {
