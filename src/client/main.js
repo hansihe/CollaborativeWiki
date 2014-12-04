@@ -58,6 +58,14 @@ var onCreateCodeMirror = function(editor) {
             adapter.applyOperation(operation);
         }
     });
+
+    editor.on("beforeSelectionChange", function(cm, selections) {
+        var otRanges = _.map(selections.ranges, function(value) {
+            return {'anchor': cm.indexFromPos(value.anchor), 'head': cm.indexFromPos(value.head)};
+        });
+        var otSelection = {'ranges': otRanges};
+        console.log(otSelection);
+    });
 };
 react.render(
     (<CodeMirrorComponent

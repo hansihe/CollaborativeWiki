@@ -1,3 +1,4 @@
 module.exports = {
-    documentOperation: 'd'
+    documentOperation: 'o',
+    documentCursor: 'c'
 };

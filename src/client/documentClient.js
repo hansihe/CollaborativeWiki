@@ -2,6 +2,7 @@ var ot = require('ot');
 var _ = require('../shared/underscore');
 var thisify = require('../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
+var eventAliases = require('../shared/eventAliases');
 
 
 function DocumentClient(manager, id) {
@@ -17,6 +18,10 @@ _.extend(DocumentClient.prototype, EventEmitter.prototype, ot.Client.prototype);
 
 DocumentClient.prototype.applyChange = function(operation) {
     this.applyClient(operation);
+};
+
+DocumentClient.prototype.applySelection = function(selection) {
+    this.manager.remote.publish(eventAliases.documentCursor, this.id, selection);
 };
 
 DocumentClient.prototype.onDisconnected = function() {
@@ -47,7 +52,7 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
     };
     this.sendOperation = function(revision, operation) {
         var jsonOperation = operation.toJSON();
-        this.manager.remote.pubsub.publish('d', this.id, revision, jsonOperation);
+        this.manager.remote.pubsub.publish(eventAliases.documentOperation, this.id, revision, jsonOperation);
         console.log("S <- C: ", this.id, revision, operation);
     };
 
