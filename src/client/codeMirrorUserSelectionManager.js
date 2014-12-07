@@ -5,14 +5,9 @@ function CodeMirrorUserSelection(cm) {
 
     //setTimeout(function() {
     var pos = cm.getDoc().posFromIndex(2);
-    var cursor = cmUSThis.makeCursor(2, pos);
-    cm.addWidget(pos, cursor);
+    this.cursor = cmUSThis.makeCursor(2, pos);
+    cm.addWidget(pos, this.cursor);
     //}, 2000);
-
-
-    setInterval(function() {
-
-    });
 
 
     //console.log("yee");
@@ -23,14 +18,28 @@ CodeMirrorUserSelection.prototype.makeCursor = function() {
     var cursorHeight = Math.max(0, pos.bottom - pos.top) * this.cm.options.cursorHeight + "px";*/
     var cursorHeight = 13 + "px";
 
-    var element = document.createElement("div");
-    element.style.position = "absolute";
-    element.style.height = cursorHeight;
-    element.style.width = 0;
-    element.style.borderLeft = "solid 1px green";
-    element.style.borderRight = "solid 1px green";
+    var cursorContainer = document.createElement("div");
+    cursorContainer.style.position = "absolute";
+    cursorContainer.style.height = 0;
+    cursorContainer.style.width = 0;
 
-    return element;
+    var cursorDisplay = document.createElement("div");
+    cursorDisplay.style.position = "absolute";
+    cursorDisplay.style.left = 0;
+    cursorDisplay.style.bottom = 0;
+    cursorDisplay.style.height = cursorHeight;
+    cursorDisplay.style.width = 0;
+    cursorDisplay.style.borderLeft = "solid 1px green";
+    cursorDisplay.style.borderRight = "solid 1px green";
+
+    cursorContainer.appendChild(cursorDisplay);
+
+    return cursorContainer;
+};
+
+CodeMirrorUserSelection.prototype.setCursorPos = function(pos) {
+    this.cursor.parentElement.removeChild(this.cursor);
+    this.cm.addWidget(this.cm.getDoc().posFromIndex(pos), this.cursor);
 };
 
 module.exports = CodeMirrorUserSelection;

@@ -20,12 +20,32 @@ function DocumentClient(stateManager, documentClientManager, id) {
     ot.Client.call(this);
     this.handshaken = false;
 
+    this.text = null;
+
     this.id = id;
 
     this.stateManager = stateManager;
     this.manager = documentClientManager;
 }
 _.extend(DocumentClient.prototype, EventEmitter.prototype, ot.Client.prototype);
+
+/**
+ * Registers a callback for when the document receives initial state from the server.
+ * If the document is already initialized, it returns immediately.
+ * @param callback
+ */
+DocumentClient.prototype.getInitialState = function(callback) {
+    var documentClientThis = this;
+    if (this.isConnected()) {
+        callback(this);
+        return function() {}
+    } else {
+        this.once('initialState', callback);
+        return function() {
+            documentClientThis.removeListener('initialState', callback);
+        }
+    }
+};
 
 /**
  * Called by an editor when an edit is performed.
@@ -81,18 +101,24 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
     this.document = document;
     this.handshaken = true;
 
-    this.applyOperation = function(operation) {
+    /* this.applyOperation = function(operation) {
         this.emit('applyOperation', operation);
-    };
+    }; */
+
+    this.text = document;
 
     this.emit('remote');
     this.emit('documentReplace', document);
+    this.emit('initialState', this);
 };
 
 /**
  * Called by ot.Client when we should transmit a operation to the server.
  */
 DocumentClient.prototype.sendOperation = function(revision, operation) {
+    this.text = operation.apply(this.text);
+    this.emit('documentChange');
+
     var jsonOperation = operation.toJSON();
 
     var repr = eventDataWrappers.operationDataWrapper.packObject({
@@ -111,7 +137,9 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
  * Gets published on the DocumentClient's event bus, 'applyOperation'.
  */
 DocumentClient.prototype.applyOperation = function(operation) {
+    this.text = operation.apply(this.text);
     this.emit('applyOperation', operation);
+    this.emit('documentChange');
 };
 
 /**
@@ -124,6 +152,10 @@ DocumentClient.prototype.incomingServerOperation = function(ack, revision, opera
         this.applyServer(operation);
     }
     console.log("C <- S: ", this.id, ack, revision, operation);
+};
+
+DocumentClient.prototype.incomingServerSelection = function(userId, data) {
+    this.emit('selection', data);
 };
 
 module.exports = DocumentClient;

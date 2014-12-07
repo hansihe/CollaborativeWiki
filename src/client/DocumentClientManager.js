@@ -8,7 +8,8 @@ var thisify = require('../shared/thisify');
 
 /**
  * Provides glue logic between a NetworkChannel and several DocumentClients.
- * It's fine to request
+ * It's fine to request a DocumentClient before we have been connected to the server, but you should probably wait
+ * before actually doing anything.
  * @constructor
  */
 function DocumentClientManager(stateManager) {
@@ -32,9 +33,25 @@ function DocumentClientManager(stateManager) {
         var operation = ot.TextOperation.fromJSON(operationInfo.operation);
         client.incomingServerOperation(operationInfo.userId === documentClientManagerThis.stateManager.userId, operationInfo.documentRevision, operation);
     });
+    this.stateManager.networkChannel.pubsub.on(eventAliases.documentCursor, function(repr) {
+        var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(repr);
+
+        var client = documentClientManagerThis.clients[selectionInfo.documentId];
+        if (!client) {
+            return;
+        }
+
+        console.log(selectionInfo);
+
+        var selection = ot.Selection.fromJSON(selectionInfo.selection);
+        client.incomingServerSelection(selectionInfo.userId, selection);
+    });
 }
 
-DocumentClientManager.prototype.networkConnected = function(networkChannel) {
+/**
+ * Called by the onReady event on the stateManager.
+ */
+DocumentClientManager.prototype.networkConnected = function() {
     this.connected = true;
 
     _.forIn(this.clients, function(value) {
@@ -42,6 +59,9 @@ DocumentClientManager.prototype.networkConnected = function(networkChannel) {
     }, this);
 };
 
+/**
+ * Called by the onDisconnected event on the stateManager.
+ */
 DocumentClientManager.prototype.networkDisconnected = function() {
     this.connected = false;
 
@@ -54,6 +74,12 @@ DocumentClientManager.prototype.isConnected = function() {
     return this.connected;
 };
 
+/**
+ * Fetches/makes the DocumentClient for the supplied id.
+ * This is pretty much the only method you should call in normal usage.
+ * @param id the document id
+ * @returns DocumentClient
+ */
 DocumentClientManager.prototype.requestClient = function(id) {
     console.log(id);
 

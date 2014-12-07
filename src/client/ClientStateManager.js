@@ -12,6 +12,12 @@ function rewireEvent(source, type, destination, destinationType) {
     });
 }
 
+/**
+ * This class is tasked with managing all state of the client, including connection, document, login, more.
+ * Notable properties are:
+ * * documentClientManager - manages and provides DocumentClients
+ * @constructor
+ */
 function ClientStateManager() {
     this.userId = undefined;
 
@@ -33,22 +39,41 @@ function ClientStateManager() {
 }
 _.extend(ClientStateManager.prototype, EventEmitter.prototype);
 
+/**
+ * Called on the networkConnected event.
+ * When this event is fired, we have a fully functional socket to the server, however we haven't performed handshake
+ * yet.
+ */
 ClientStateManager.prototype.onNetworkConnected = function() {
     console.log('connect');
 
     this.networkChannel.rpcRemote.handshake(thisify(this.handshakeCallback, this));
 };
 
+/**
+ * Used as a callback for the server, response to the handshake.
+ * @param userId
+ */
 ClientStateManager.prototype.handshakeCallback = function(userId) {
     this.emit('networkReady');
 
     this.userId = userId;
 };
 
+/**
+ * Called on the networkReady event.
+ * When this event is fired, we have finished the handshake with the server, and have a lot of delicious state
+ * available.
+ * When this is called, you should probably start preparing for normal operation.
+ */
 ClientStateManager.prototype.onNetworkReady = function() {
     console.log('ready');
 };
 
+/**
+ * Called on the networkDisconnected event.
+ * Should prepare to receive a new onConnected event.
+ */
 ClientStateManager.prototype.onNetworkDisconnected = function() {
     console.log('disconnect');
 };

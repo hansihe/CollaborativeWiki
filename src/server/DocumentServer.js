@@ -15,10 +15,13 @@ function OTServer(name) {
 }
 _.extend(OTServer.prototype, EventEmitter.prototype);
 
-OTServer.prototype.receiveOperation = function (revision, operation, additionalData) {
+OTServer.prototype.receiveOperation = function (data) {
     var otThis = this;
+    var operation = data.operation;
+    var revision = data.revision;
 
     this.documentWrapper.lock(function(releaseLock) {
+
         var multiRead = services.redisClient.redisConnection.multi();
 
         multiRead.get(otThis.documentWrapper.propertyNames.document);
@@ -52,7 +55,7 @@ OTServer.prototype.receiveOperation = function (revision, operation, additionalD
             multiWrite.set(otThis.documentWrapper.propertyNames.document, document);
             multiWrite.rpush(otThis.documentWrapper.propertyNames.operations, operation.toJSON());
 
-            var message = additionalData || {};
+            var message = data || {};
             message['operation'] = operation.toJSON();
             message['revision'] = operationsLength + 1;
             multiWrite.publish(otThis.documentWrapper.propertyNames.stream, JSON.stringify(message));
@@ -63,6 +66,19 @@ OTServer.prototype.receiveOperation = function (revision, operation, additionalD
                 releaseLock();
             });
         });
+    });
+};
+
+OTServer.prototype.receiveSelection = function(data) {
+    var otThis = this;
+
+    var multiWrite = services.redisClient.redisConnection.multi();
+
+    var message = data || {};
+    multiWrite.publish(otThis.documentWrapper.propertyNames.selectionStream, JSON.stringify(message));
+
+    multiWrite.exec(function(err, results) {
+        console.log("Published selection.");
     });
 };
 

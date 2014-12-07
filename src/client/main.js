@@ -5,17 +5,7 @@ var shoe = require('shoe');
 var _ = require('../shared/underscore');
 
 var ot = require('ot');
-var CodeMirrorAdapter = require('./codemirror-adapter');
-var ClientStateManager = require('./ClientStateManager');
-
-var CodeMirrorComponent = require('./react_components/codemirror');
-var CodeMirrorUserSelectionManager = require('./codeMirrorUserSelectionManager');
-require('codemirror/mode/markdown/markdown');
 // End imports
-
-
-
-
 
 /*
 Client:
@@ -28,52 +18,33 @@ Server:
 
  */
 
-var clientStateManager = new ClientStateManager();
 
-var onCreateCodeMirror = function(editor) {
-    var documentClientManager = clientStateManager.documentClientManager;
 
-    var channel = documentClientManager.requestClient("testDocument");
-    var adapter = new CodeMirrorAdapter(editor);
-    new CodeMirrorUserSelectionManager(editor);
-    adapter.registerCallbacks({
-        change: function(operation, inverse) {
-            if (t) {
-                channel.performClientOperation(operation);
-            }
-        }
-    });
-    var t = false;
-    channel.on('documentReplace', function(document) {
-        editor.setValue(document);
-        t = true;
-    });
-    channel.on('applyOperation', function(operation) {
-        if (t) {
-            adapter.applyOperation(operation);
-        }
-    });
+var renderer = require('./markdown/renderer');
+console.log(renderer.renderText('# test\n> Testing __how2lol?__'));
 
-    editor.on("beforeSelectionChange", function(cm, selections) {
-        var otRanges = [];
-        _.forEach(selections.ranges, function(value) {
-            otRanges.push({
-                anchor: cm.indexFromPos(value.anchor),
-                head: cm.indexFromPos(value.head)
-            });
-        });
-        var otSelection = {'ranges': otRanges};
 
-        channel.performSelection(otSelection);
-        console.log(otSelection);
+
+var ReactRouter = require('react-router');
+var Route = ReactRouter.Route;
+var DefaultRoute = ReactRouter.DefaultRoute;
+
+var App = require('./react_components/ViewApp');
+var DocumentView = require('./react_components/ViewDocumentView');
+var DocumentEdit = require('./react_components/ViewDocumentEdit');
+var Login = require('./react_components/ViewLogin');
+
+var routes = (
+    <Route name="index" path="/" handler={App}>
+        <DefaultRoute handler={DocumentEdit}/>
+        <Route name="login" handler={Login}/>
+        <Route name="page" path="/page/:documentId" handler={DocumentEdit}/>
+        <Route name="pageEdit" path="/page/:documentId/edit" handler={DocumentEdit}/>
+    </Route>
+);
+
+window.onload = function() {
+    ReactRouter.run(routes, ReactRouter.HistoryLocation, function(Handler) {
+        React.render((<Handler/>), document.body);
     });
 };
-react.render(
-    (<CodeMirrorComponent
-        style={{border: '1px solid black'}}
-        defaultValue="Testing"
-        mode="markdown"
-        theme="neat"
-        lineNumbers="true"
-        onCreate={onCreateCodeMirror}/>),
-    document.getElementById('root'));

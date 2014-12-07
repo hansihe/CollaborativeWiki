@@ -1,4 +1,4 @@
-var OTServer = require('./OTServer');
+var DocumentServer = require('./DocumentServer');
 var NetworkChannel = require('./../shared/NetworkChannel');
 var ot = require('ot');
 var uuid = require('node-uuid');
@@ -7,10 +7,10 @@ var eventAliases = require('./../shared/eventAliases');
 var eventDataWrappers = require('./../shared/eventDataWrappers');
 
 var tempDocuments = {
-    testDocument: new OTServer("testDocumentWoo5")
+    testDocument: new DocumentServer("testDocumentWoo5")
 };
 
-function ClientContext(stream) {
+function ServerStateManager(stream) {
     var clientConnectionThis = this;
 
     this.debugLog = function() {
@@ -24,7 +24,7 @@ function ClientContext(stream) {
             callback(clientConnectionThis.uuid);
         },
         initDocumentChannel: function(id, callback) {
-            var document = tempDocuments[id];
+            var document = ServerStateManager.getDocumentServer(id);
 
             document.documentWrapper.subscribe(function(operation) {
                 clientConnectionThis.channel.pubsub.publish(eventAliases.documentOperation, eventDataWrappers.operationDataWrapper.packObject({
@@ -32,6 +32,13 @@ function ClientContext(stream) {
                     userId: operation.senderUUID,
                     documentRevision: operation.revision,
                     operation: operation.operation
+                }));
+            });
+            document.documentWrapper.subscribeSelection(function(selection) {
+                clientConnectionThis.channel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
+                    documentId: id,
+                    userId: selection.userId,
+                    selection: selection.selection
                 }));
             });
 
@@ -59,19 +66,38 @@ function ClientContext(stream) {
         clientConnectionThis.channel.pubsub.on(eventAliases.documentOperation, function(rawRepr) {//id, revision, rawOperation) { // OT operation receive
             var operationInfo = eventDataWrappers.operationDataWrapper.unpack(rawRepr);
 
-            var document = tempDocuments[operationInfo.documentId];
+            var document = ServerStateManager.getDocumentServer(operationInfo.documentId);
             var operation = ot.TextOperation.fromJSON(operationInfo.operation);
 
-            document.receiveOperation(operationInfo.documentRevision, operation, {
-                id: operationInfo.id,
-                senderUUID: clientConnectionThis.uuid
+            document.receiveOperation({
+                id: operationInfo.documentId,
+                revision: operationInfo.documentRevision,
+                senderUUID: clientConnectionThis.uuid,
+                operation: operation
             });
         });
         clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, function(rawRepr) {
             var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(rawRepr);
+
+            var document = ServerStateManager.getDocumentServer(selectionInfo.documentId);
+
+            document.receiveSelection({
+                id: selectionInfo.documentId,
+                senderUUID: clientConnectionThis.uuid,
+                selection: selectionInfo.selection
+            });
             console.log(JSON.stringify(selectionInfo));
         });
     });
 }
 
-module.exports = ClientContext;
+ServerStateManager.getDocumentServer = function(documentId) {
+    var document = tempDocuments[documentId];
+    if (!document) {
+        document = new DocumentServer(documentId);
+        tempDocuments[documentId] = document;
+    }
+    return document;
+};
+
+module.exports = ServerStateManager;

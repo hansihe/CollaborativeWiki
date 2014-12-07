@@ -1,16 +1,98 @@
 @import "normalize";
 
+@import "foundation/settings";
+@import "foundation/components/grid";
+@import "foundation/components/accordion";
+@import "foundation/components/alert-boxes";
+@import "foundation/components/block-grid";
+@import "foundation/components/breadcrumbs";
+@import "foundation/components/button-groups";
+@import "foundation/components/buttons";
+@import "foundation/components/clearing";
+@import "foundation/components/dropdown";
+@import "foundation/components/dropdown-buttons";
+@import "foundation/components/flex-video";
+@import "foundation/components/forms";
+@import "foundation/components/icon-bar";
+@import "foundation/components/inline-lists";
+@import "foundation/components/joyride";
+@import "foundation/components/keystrokes";
+@import "foundation/components/labels";
+@import "foundation/components/magellan";
+@import "foundation/components/orbit";
+@import "foundation/components/pagination";
+@import "foundation/components/panels";
+@import "foundation/components/pricing-tables";
+@import "foundation/components/progress-bars";
+@import "foundation/components/range-slider";
+@import "foundation/components/reveal";
+@import "foundation/components/side-nav";
+@import "foundation/components/split-buttons";
+@import "foundation/components/sub-nav";
+@import "foundation/components/switches";
+@import "foundation/components/tables";
+@import "foundation/components/tabs";
+@import "foundation/components/thumbs";
+@import "foundation/components/tooltips";
+@import "foundation/components/top-bar";
+@import "foundation/components/type";
+@import "foundation/components/offcanvas";
+@import "foundation/components/visibility";
+
 html, body, #root {
   width: 100%;
   height: 100%;
 }
 
-.editBox {
+.app-root {
   height: 100%;
+  position: relative;
 
-  textarea {
-    width: 50%;
-    height: 50%;
+  .top-bar {
+    z-index: 2;
+
+    li > a.active {
+      background: $topbar-link-bg-active;
+      color: $topbar-link-color-active;
+      &:hover {
+        background: $topbar-link-bg-active-hover;
+        color: $topbar-link-color-active-hover;
+      }
+    }
+
+    input.location-edit-box {
+      background-color: inherit;
+      color: #fff;
+      border: 0;
+      box-shadow: none;
+      position: relative;
+
+      transition: border-bottom-color 0.4s;
+      border-bottom: solid 1px darken($topbar-bg-color, 10%);
+    }
+    input.location-edit-box:focus {
+      border-bottom-color: #eeeeee;
+    }
+  }
+
+  .app-content-wrapper {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-top: 45px;
+
+    .login-page {
+      margin-top: 24px;
+    }
+  }
+}
+
+.codemirror-container {
+  height: 100%;
+  .CodeMirror {
+    height: 100%;
   }
 }
 
