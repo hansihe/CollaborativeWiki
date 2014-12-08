@@ -4,6 +4,8 @@ var _ = require('../../shared/underscore');
 var React = require('react');
 var DocumentRendererComponent = require('../react_components/HTMLDisplayComponent');
 
+// TODO: Emit line numbers
+
 var remarkable = new Remarkable({
     html: false, // TODO: Make simple html work
     linkify: true,
@@ -43,7 +45,7 @@ var types = {
     paragraph: function(tokens, startNum, token) {
         var containing = makeTags(tokens, startNum + 1, 'paragraph_close');
         if (token.tight) {
-            return [containing[0], containing[1] + 1]; // TODO: Possibly make this return elements only?
+            return [containing[0], containing[1] + 1];
             // React.createElement('span', {'line': token.lines[0]},
         } else {
             return [React.createElement('p', null, containing[0]), containing[1] + 1];
