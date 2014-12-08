@@ -4,6 +4,16 @@ var TopBarComponent = require('./TopBarComponent');
 var RouteHandler = require('react-router').RouteHandler;
 
 var AppComponent = react.createClass({
+    statics: {
+        willTransitionFrom: function() {
+            //alert('transition');
+        },
+        willTransitionTo: function (transition, params) {
+            //alert('transition');
+            //console.log("Transition!!", transition, params);
+        }
+    },
+
     render: function() {
         return (
             <div className="app-root">

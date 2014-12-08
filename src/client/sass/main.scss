@@ -96,4 +96,10 @@ html, body, #root {
   }
 }
 
+.markdown-container {
+  img {
+    max-width: 35%;
+  }
+}
+
 @import "codemirror";

@@ -10,8 +10,9 @@ var DocumentRenderer = React.createClass({
     },
 
     render: function() {
+        console.log(renderer);
         return (
-            <div style={this.props.style}>
+            <div style={this.props.style} className="markdown-container">
                 {renderer.renderText(this.state.markdown)}
             </div>
         )

@@ -6,12 +6,15 @@ var Link = require('react-router').Link;
 var TopBarLocationEditComponent = require('./TopBarLocationEditComponent');
 
 var ActionBarComponent = React.createClass({
-    mixins: [ReactRouter.State],
+    mixins: [ReactRouter.State, ReactRouter.Navigation],
+
+    getInitialState: function() {
+        return {
+            location: this.getParams().documentId || 'index'
+        }
+    },
 
     render: function() {
-        var documentId = this.getParams().documentId || 'index';
-        /*<LocationEditComponent/>*/
-
         return (
             <nav className="top-bar">
                 <ul className="title-area">
@@ -21,7 +24,7 @@ var ActionBarComponent = React.createClass({
                 </ul>
                 <section className="top-bar-section">
                     <ul className="left">
-                        <TopBarLocationEditComponent/>
+                        <TopBarLocationEditComponent location={this.getWikiLocation()} navigationCallback={this.navigateToWikiPage}/>
                     </ul>
                 </section>
                 <section className="top-bar-section">
@@ -33,6 +36,21 @@ var ActionBarComponent = React.createClass({
                 </section>
             </nav>
         )
+    },
+
+    getWikiLocation: function() {
+        console.log(this.getPath(), this.getRoutes(), this.getParams());
+        if (this.getPath() == '/') {
+            return 'index';
+        }
+        if (this.getParams().documentId) {
+            return this.getParams().documentId;
+        }
+        return '';
+    },
+
+    navigateToWikiPage: function(id) {
+        this.transitionTo('page', {documentId: id});
     }
 });
 

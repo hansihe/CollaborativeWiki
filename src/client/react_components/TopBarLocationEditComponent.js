@@ -1,12 +1,9 @@
 var React = require('react');
-var ReactRouter = require('react-router');
 
 var LocationEdit = React.createClass({
-    mixins: [ReactRouter.State, ReactRouter.Navigation],
-
     getInitialState: function() {
         return {
-            location: this.getParams().documentId || 'index'
+            location: this.props.location
         }
     },
 
@@ -26,10 +23,15 @@ var LocationEdit = React.createClass({
             </li>
         );
     },
-    revertValue: function() {
-        var documentId = this.getParams().documentId || 'index';
+    componentWillReceiveProps: function(nextProps) {
         this.setState({
-            location: documentId
+            location: nextProps.location
+        });
+    },
+    revertValue: function() {
+        console.log(this.props.location);
+        this.setState({
+            location: this.props.location
         });
     },
     handleChange: function(event) {
@@ -39,7 +41,7 @@ var LocationEdit = React.createClass({
     },
     handleKeyDown: function(event) {
         if (event.keyCode == 13) {
-            this.transitionTo('page', {documentId: this.state.location})
+            this.props.navigationCallback(this.state.location);
         }
     }
 });
