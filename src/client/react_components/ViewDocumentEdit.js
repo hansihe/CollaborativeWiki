@@ -2,6 +2,7 @@ var React = require('react');
 var ReactRouter = require('react-router');
 var _ = require('../../shared/underscore');
 
+var DisplayModeSelectorComponent = require('./DisplayModeSelectorComponent');
 var CodeMirrorDocumentEditorComponent = require('./CodeMirrorDocumentEditorComponent');
 var DocumentRendererComponent = require('./DocumentRendererComponent');
 
@@ -13,7 +14,8 @@ var DocumentEditComponent = React.createClass({
     render: function() {
         var documentId = this.getParams().documentId || 'index';
         return (
-            <div style={{display: "flex", height: "100%"}}>
+            <div style={{display: "flex", height: "100%", position: "relative"}}>
+                <DisplayModeSelectorComponent active="edit"/>
                 <CodeMirrorDocumentEditorComponent
                     documentId={documentId}
                     style={{height: "100%", flex: "1 0 0"}}/>

@@ -32,7 +32,7 @@ var routes = (
     <Route name="index" path="/" handler={App}>
         <DefaultRoute handler={DocumentEdit}/>
         <Route name="login" handler={Login}/>
-        <Route name="page" path="/page/:documentId" handler={DocumentEdit}/>
+        <Route name="page" path="/page/:documentId" handler={DocumentView}/>
         <Route name="pageEdit" path="/page/:documentId/edit" handler={DocumentEdit}/>
     </Route>
 );

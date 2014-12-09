@@ -102,4 +102,36 @@ html, body, #root {
   }
 }
 
+.display-mode-selector {
+  position: fixed;
+  top: $topbar-height + 10px;
+  right: 10px;
+
+  padding: 0;
+  margin: 0;
+  background-color: #dddddd;
+  opacity: 0.4;
+  display: inline-block;
+
+  &:hover {
+    opacity: 1;
+  }
+
+  li {
+    list-style: none;
+    display: inline-block;
+    width: auto;
+    padding: 4px 10px;
+    user-select: none;
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    &.active {
+      background-color: #aaaaaa;
+    }
+  }
+}
+
 @import "codemirror";
