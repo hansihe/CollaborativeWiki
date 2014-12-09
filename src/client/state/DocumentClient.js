@@ -1,9 +1,9 @@
 var ot = require('ot');
-var _ = require('../shared/underscore');
-var thisify = require('../shared/thisify');
+var _ = require('../../shared/underscore');
+var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
-var eventAliases = require('../shared/eventAliases');
-var eventDataWrappers = require('../shared/eventDataWrappers');
+var eventAliases = require('../../shared/eventAliases');
+var eventDataWrappers = require('../../shared/eventDataWrappers');
 
 
 /**

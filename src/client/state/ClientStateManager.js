@@ -1,9 +1,9 @@
-var NetworkChannel = require('../shared/NetworkChannel');
+var NetworkChannel = require('../../shared/NetworkChannel');
 var DocumentClientManager = require('./DocumentClientManager');
 var EventEmitter = require('events').EventEmitter;
 var shoe = require('shoe');
-var thisify = require('../shared/thisify');
-var _ = require('../shared/underscore');
+var thisify = require('../../shared/thisify');
+var _ = require('../../shared/underscore');
 
 function rewireEvent(source, type, destination, destinationType) {
     destinationType = destinationType || type;
@@ -33,9 +33,9 @@ function ClientStateManager() {
 
     this.documentClientManager = new DocumentClientManager(this);
 
-    this.on('networkConnected', thisify(this.onNetworkConnected, this));
-    this.on('networkReady', thisify(this.onNetworkReady, this));
-    this.on('networkDisconnected', thisify(this.onNetworkDisconnected, this));
+    this.on('networkConnected', thisify(this._onNetworkConnected, this));
+    this.on('networkReady', thisify(this._onNetworkReady, this));
+    this.on('networkDisconnected', thisify(this._onNetworkDisconnected, this));
 }
 _.extend(ClientStateManager.prototype, EventEmitter.prototype);
 
@@ -44,7 +44,7 @@ _.extend(ClientStateManager.prototype, EventEmitter.prototype);
  * When this event is fired, we have a fully functional socket to the server, however we haven't performed handshake
  * yet.
  */
-ClientStateManager.prototype.onNetworkConnected = function() {
+ClientStateManager.prototype._onNetworkConnected = function() {
     console.log('connect');
 
     this.networkChannel.rpcRemote.handshake(thisify(this.handshakeCallback, this));
@@ -66,7 +66,7 @@ ClientStateManager.prototype.handshakeCallback = function(userId) {
  * available.
  * When this is called, you should probably start preparing for normal operation.
  */
-ClientStateManager.prototype.onNetworkReady = function() {
+ClientStateManager.prototype._onNetworkReady = function() {
     console.log('ready');
 };
 
@@ -74,7 +74,7 @@ ClientStateManager.prototype.onNetworkReady = function() {
  * Called on the networkDisconnected event.
  * Should prepare to receive a new onConnected event.
  */
-ClientStateManager.prototype.onNetworkDisconnected = function() {
+ClientStateManager.prototype._onNetworkDisconnected = function() {
     console.log('disconnect');
 };
 

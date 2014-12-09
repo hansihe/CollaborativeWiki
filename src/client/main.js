@@ -19,12 +19,6 @@ Server:
  */
 
 
-
-var renderer = require('./markdown/renderer');
-console.log(renderer.renderText('# test\n> Testing __how2lol?__'));
-
-
-
 var ReactRouter = require('react-router');
 var Route = ReactRouter.Route;
 var DefaultRoute = ReactRouter.DefaultRoute;

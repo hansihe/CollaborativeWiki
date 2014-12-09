@@ -19,14 +19,29 @@ remarkable.core.ruler.enable([
     'abbr'
 ]);
 
+/**
+ * Makes a function that takes an array of tokens and a start index and returns a react element.
+ * Presumes that a closing token follows.
+ * This is used for simple tags without any additional required logic. (like divs, table, ul)
+ * @param tagName
+ * @param tokenName optional, defaults to tagName
+ * @returns {Function}
+ */
 function basicContainerTag(tagName, tokenName) {
-    var tokenName = tokenName || tagName;
+    var tokenNameS = tokenName || tagName;
     return function(tokens, startNum) {
-        var ret = makeTags(tokens, startNum + 1, tokenName + '_close');
+        var ret = makeTags(tokens, startNum + 1, tokenNameS + '_close');
         return [React.createElement(tagName, null, ret[0]), ret[1] + 1]
     }
 }
 
+/**
+ * Makes a function that takes an array of tokens and a start index and returns a react element.
+ * Presumes that the tag is singular, without any content. It will not attempt to parse any other tokens than the one
+ * at the index.
+ * @param tagName
+ * @returns {Function}
+ */
 function basicEmptyTag(tagName) {
     return function(tokens, startNum) {
         return [React.createElement(tagName, null, null), startNum + 1];
@@ -135,6 +150,12 @@ function getTypeInfo(type) {
     }
 }
 
+/**
+ * Takes an array of tokens and a start tag and returns a single element (or an array of elements to add to the parent)
+ * @param tokens
+ * @param startNum
+ * @returns {*}
+ */
 function makeTag(tokens, startNum) {
     var openingTag = tokens[startNum];
     var tagType = openingTag.type;
@@ -145,6 +166,15 @@ function makeTag(tokens, startNum) {
     return typeMake(tokens, startNum, openingTag);
 }
 
+/**
+ * Takes an array of tokens and a start index and returns an array of elements.
+ * Calls makeTag to make a tag.
+ * Stops eating tokens at stopType.
+ * @param tokens
+ * @param startNum
+ * @param stopType
+ * @returns {*[]}
+ */
 function makeTags(tokens, startNum, stopType) {
     var i = startNum;
     var result = [];
@@ -162,9 +192,20 @@ function makeTags(tokens, startNum, stopType) {
 }
 
 module.exports = {
+    /**
+     * Parses the markdown string into tokens and renders it to react virtual dom elements.
+     * @param text
+     * @returns {*}
+     */
     renderText: function(text) {
         return this.renderTokens(remarkable.parse(text, {}));
     },
+
+    /**
+     * Takes a array of tokens and renders it to react virtual dom elements.
+     * @param tokens
+     * @returns {*}
+     */
     renderTokens: function(tokens) {
         console.log(tokens);
         var tags = makeTags(tokens, 0, null);

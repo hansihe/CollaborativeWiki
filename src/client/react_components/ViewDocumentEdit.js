@@ -5,7 +5,7 @@ var _ = require('../../shared/underscore');
 var CodeMirrorDocumentEditorComponent = require('./CodeMirrorDocumentEditorComponent');
 var DocumentRendererComponent = require('./DocumentRendererComponent');
 
-var services = require('../serviceManager');
+var services = require('../state/serviceManager');
 
 var DocumentEditComponent = React.createClass({
     mixins: [ReactRouter.State],

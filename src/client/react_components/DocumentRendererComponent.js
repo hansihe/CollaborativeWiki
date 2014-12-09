@@ -1,6 +1,6 @@
 var React = require('react');
 var renderer = require('../markdown/renderer');
-var services = require('../serviceManager');
+var services = require('../state/serviceManager');
 
 var DocumentRenderer = React.createClass({
     getInitialState: function() {

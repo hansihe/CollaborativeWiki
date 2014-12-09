@@ -1,6 +1,6 @@
 var React = require('react');
 var CodeMirror = require('codemirror');
-var services = require('../serviceManager');
+var services = require('../state/serviceManager');
 var _ = require('../../shared/underscore');
 
 var CodeMirrorAdapter = require('../codemirror-adapter');
@@ -23,6 +23,13 @@ var CodeMirrorDocumentEditor = React.createClass({
         }
     },
 
+    componentDidMount: function() {
+        this.editor = CodeMirror(this.refs.container.getDOMNode(), this.props);
+        this.setDocument(this.props.documentId);
+    },
+    componentWillReceiveProps: function(nextProps) {
+        this.setDocument(nextProps.documentId);
+    },
     setDocument: function(documentId) {
         var componentThis = this;
 
@@ -49,18 +56,18 @@ var CodeMirrorDocumentEditor = React.createClass({
             });
         });
     },
-    componentDidMount: function() {
-        this.editor = CodeMirror(this.refs.container.getDOMNode(), this.props);
-        this.setDocument(this.props.documentId);
-    },
-    componentWillReceiveProps: function(nextProps) {
-        this.setDocument(nextProps.documentId);
-    },
+
     render: function() {
         return (
             <div className="codemirror-container" ref="container" style={this.props.style}></div>
         );
     },
+
+    /**
+     * Normally called by setDocument whe
+     * @param editor
+     * @param documentClient
+     */
     setDocumentClientOnEditor: function(editor, documentClient) {
         documentClient.text && editor.setValue(documentClient.text);
 
@@ -91,7 +98,6 @@ var CodeMirrorDocumentEditor = React.createClass({
         //    codeMirrorExtension.setCursorPos(selection.ranges[0].anchor)
         //});
     },
-
     onApplyOperation: function(operation) {
         this.editorDocumentAdapter.applyOperation(operation);
     }
