@@ -6,16 +6,10 @@ var services = require('./serviceManager');
 var eventAliases = require('./../shared/eventAliases');
 var eventDataWrappers = require('./../shared/eventDataWrappers');
 
-var tempDocuments = {
-    testDocument: new DocumentServer("testDocumentWoo5")
-};
+var tempDocuments = {};
 
 function ServerStateManager(stream) {
     var clientConnectionThis = this;
-
-    this.debugLog = function() {
-        console.log.apply(console.log, ["ClientContext", clientConnectionThis.uuid, ":"].concat(arguments))
-    };
 
     this.uuid = uuid.v4();
 
@@ -26,21 +20,8 @@ function ServerStateManager(stream) {
         initDocumentChannel: function(id, callback) {
             var document = ServerStateManager.getDocumentServer(id);
 
-            document.documentWrapper.subscribe(function(operation) {
-                clientConnectionThis.channel.pubsub.publish(eventAliases.documentOperation, eventDataWrappers.operationDataWrapper.packObject({
-                    documentId: id,
-                    userId: operation.senderUUID,
-                    documentRevision: operation.revision,
-                    operation: operation.operation
-                }));
-            });
-            document.documentWrapper.subscribeSelection(function(selection) {
-                clientConnectionThis.channel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
-                    documentId: id,
-                    userId: selection.userId,
-                    selection: selection.selection
-                }));
-            });
+            document.documentWrapper.subscribe(clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis));
+            document.documentWrapper.subscribeSelection(clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis));
 
             var multi = services.redisClient.redisConnection.multi();
 
@@ -61,35 +42,56 @@ function ServerStateManager(stream) {
 
     // Confirmed connection
     this.channel.on('remote', function(remote) {
-        clientConnectionThis.debugLog("Connected");
+        console.log("connected");
 
-        clientConnectionThis.channel.pubsub.on(eventAliases.documentOperation, function(rawRepr) {//id, revision, rawOperation) { // OT operation receive
-            var operationInfo = eventDataWrappers.operationDataWrapper.unpack(rawRepr);
-
-            var document = ServerStateManager.getDocumentServer(operationInfo.documentId);
-            var operation = ot.TextOperation.fromJSON(operationInfo.operation);
-
-            document.receiveOperation({
-                id: operationInfo.documentId,
-                revision: operationInfo.documentRevision,
-                senderUUID: clientConnectionThis.uuid,
-                operation: operation
-            });
-        });
-        clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, function(rawRepr) {
-            var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(rawRepr);
-
-            var document = ServerStateManager.getDocumentServer(selectionInfo.documentId);
-
-            document.receiveSelection({
-                id: selectionInfo.documentId,
-                senderUUID: clientConnectionThis.uuid,
-                selection: selectionInfo.selection
-            });
-            console.log(JSON.stringify(selectionInfo));
-        });
+        clientConnectionThis.channel.pubsub.on(eventAliases.documentOperation, clientConnectionThis._receiveDocumentOperation.bind(clientConnectionThis));
+        clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, clientConnectionThis._receiveDocumentCursor.bind(clientConnectionThis));
     });
 }
+
+ServerStateManager.prototype._receiveDocumentOperation = function(rawRepr) {//id, revision, rawOperation) { // OT operation receive
+    var operationInfo = eventDataWrappers.operationDataWrapper.unpack(rawRepr);
+
+    var document = ServerStateManager.getDocumentServer(operationInfo.documentId);
+    var operation = ot.TextOperation.fromJSON(operationInfo.operation);
+
+    document.receiveOperation({
+        id: operationInfo.documentId,
+        revision: operationInfo.documentRevision,
+        senderUUID: this.uuid,
+        operation: operation
+    });
+};
+
+ServerStateManager.prototype._transmitDocumentOperation = function(operation) {
+    this.channel.pubsub.publish(eventAliases.documentOperation, eventDataWrappers.operationDataWrapper.packObject({
+        documentId: id,
+        userId: operation.senderUUID,
+        documentRevision: operation.revision,
+        operation: operation.operation
+    }));
+};
+
+ServerStateManager.prototype._receiveDocumentCursor = function(rawRepr) {
+    var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(rawRepr);
+
+    var document = ServerStateManager.getDocumentServer(selectionInfo.documentId);
+
+    document.receiveSelection({
+        id: selectionInfo.documentId,
+        senderUUID: this.uuid,
+        selection: selectionInfo.selection
+    });
+    console.log(JSON.stringify(selectionInfo));
+};
+
+ServerStateManager.prototype._transmitDocumentCursor = function(selection) {
+    this.channel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
+        documentId: id,
+        userId: selection.userId,
+        selection: selection.selection
+    }));
+};
 
 ServerStateManager.getDocumentServer = function(documentId) {
     var document = tempDocuments[documentId];

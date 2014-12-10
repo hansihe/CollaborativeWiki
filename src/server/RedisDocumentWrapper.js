@@ -17,8 +17,6 @@ function RedisDocumentWrapper(name) {
         result[key] = redisDocumentWrapperThis.getPropertyName(value);
         return result;
     }, {});
-
-    console.log(this.propertyNames);
 }
 RedisDocumentWrapper.prototype.getPropertyName = function(property) {
     return this.documentName + "_" + property;

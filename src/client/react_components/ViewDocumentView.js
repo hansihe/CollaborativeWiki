@@ -14,7 +14,7 @@ var DocumentViewComponent = React.createClass({
         var documentId = this.getParams().documentId || 'index';
         return (
             <div style={{height: "100%", overflowY: "scroll", paddingTop: "20px", position: "relative"}}>
-                <DisplayModeSelectorComponent active="view"/>
+                <DisplayModeSelectorComponent active="view" documentId={documentId}/>
                 <div className="row">
                     <div className="small-12">
                         <div className="panel">

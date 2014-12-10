@@ -15,7 +15,7 @@ var DocumentEditComponent = React.createClass({
         var documentId = this.getParams().documentId || 'index';
         return (
             <div style={{display: "flex", height: "100%", position: "relative"}}>
-                <DisplayModeSelectorComponent active="edit"/>
+                <DisplayModeSelectorComponent active="edit" documentId={documentId}/>
                 <CodeMirrorDocumentEditorComponent
                     documentId={documentId}
                     style={{height: "100%", flex: "1 0 0"}}/>

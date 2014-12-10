@@ -7,6 +7,8 @@ var ServerStateManager = require('./ServerStateManager');
 var path = require('path');
 var _ = require('../shared/underscore');
 
+require('../shared/DocumentCommunicationHelper');
+
 exports.makeServer = function(config) {
     var app = express();
     var httpServer = http.Server(app);

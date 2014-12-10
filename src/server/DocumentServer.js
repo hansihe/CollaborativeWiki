@@ -20,6 +20,7 @@ OTServer.prototype.receiveOperation = function (data) {
     var operation = data.operation;
     var revision = data.revision;
 
+    // Obtain lock on document
     this.documentWrapper.lock(function(releaseLock) {
 
         var multiRead = services.redisClient.redisConnection.multi();
@@ -28,6 +29,7 @@ OTServer.prototype.receiveOperation = function (data) {
         multiRead.llen(otThis.documentWrapper.propertyNames.operations);
         multiRead.lrange(otThis.documentWrapper.propertyNames.operations, revision, -1);
 
+        // Fetch data necessary for transformation
         multiRead.exec(function(err, results) {
             var document = results[0] || "";
             var operationsLength = results[1];
@@ -60,9 +62,10 @@ OTServer.prototype.receiveOperation = function (data) {
             message['revision'] = operationsLength + 1;
             multiWrite.publish(otThis.documentWrapper.propertyNames.stream, JSON.stringify(message));
 
+            // Write results back to db
             multiWrite.exec(function(err, results) {
                 console.log("Processed: ", operationsLength + 1);
-                // Release lock
+                // ... and release lock
                 releaseLock();
             });
         });
