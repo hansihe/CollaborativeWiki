@@ -207,7 +207,6 @@ module.exports = {
      * @returns {*}
      */
     renderTokens: function(tokens) {
-        console.log(tokens);
         var tags = makeTags(tokens, 0, null);
         return React.createElement('div', null, tags[0]);
     }

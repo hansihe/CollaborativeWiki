@@ -4,6 +4,7 @@ var DocumentClient = require('./DocumentClient');
 var ot = require('ot');
 var eventDataWrappers = require('../../shared/eventDataWrappers');
 var thisify = require('../../shared/thisify');
+var CommunicationHelper = require('../../shared/DocumentCommunicationHelper');
 
 
 /**
@@ -20,24 +21,31 @@ function DocumentClientManager(stateManager) {
     this.stateManager.on('networkReady', thisify(this._networkConnected, this));
     this.stateManager.on('networkDisconnected', thisify(this._networkDisconnected, this));
 
-    this.stateManager.networkChannel.pubsub.on(eventAliases.documentOperation, thisify(this._onDocumentOperation, this));
     this.stateManager.networkChannel.pubsub.on(eventAliases.documentCursor, thisify(this._onDocumentSelection, this));
+    this.stateManager.networkChannel.pubsub.on('p', this._receiveMessage.bind(this));
 }
 
-/**
- * Called with the raw data when a operation event is received over the network.
- * @private
- */
-DocumentClientManager.prototype._onDocumentOperation = function(repr) {
-    var operationInfo = eventDataWrappers.operationDataWrapper.unpack(repr);
+DocumentClientManager.prototype._receiveMessage = function(message) {
+    var data = CommunicationHelper.unpack(message);
 
-    var client = this.clients[operationInfo.documentId];
+    var client = this.clients[data.documentId];
     if (!client) {
         return;
     }
 
-    var operation = ot.TextOperation.fromJSON(operationInfo.operation);
-    client.incomingServerOperation(operationInfo.userId === this.stateManager.userId, operationInfo.documentRevision, operation);
+    switch (data.type) {
+        case 'documentOperation': {
+            client.incomingServerOperation(data.userId === this.stateManager.userId, data.documentRevision, data.operation);
+            break;
+        }
+    }
+
+    console.log("nm", data);
+};
+
+DocumentClientManager.prototype.sendMessage = function(data) {
+    console.log("MS", data);
+    this.stateManager.networkChannel.pubsub.publish('p', CommunicationHelper.pack(data));
 };
 
 /**

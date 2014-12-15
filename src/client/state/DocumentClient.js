@@ -119,17 +119,13 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
     this.text = operation.apply(this.text);
     this.emit('documentChange');
 
-    var jsonOperation = operation.toJSON();
-
-    var repr = eventDataWrappers.operationDataWrapper.packObject({
+    this.manager.sendMessage({
+        type: 'documentOperation',
         documentId: this.id,
         userId: null,
         documentRevision: revision,
-        operation: jsonOperation
+        operation: operation
     });
-    this.stateManager.networkChannel.pubsub.publish(eventAliases.documentOperation, repr);
-
-    console.log("S <- C: ", repr);
 };
 
 /**

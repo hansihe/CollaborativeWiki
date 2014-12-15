@@ -1,5 +1,6 @@
 var _ = require('./underscore');
 var EventEmitter = require('events').EventEmitter;
+var ot = require('ot');
 
 var opCodes = [
     'documentOperation',
@@ -7,7 +8,7 @@ var opCodes = [
     'userExitDocument',
     'userSelection'
 ];
-var opCodesInv = _.reduce(operationCodes, function(result, code, num) {
+var opCodesInv = _.reduce(opCodes, function(result, code, num) {
     result[code] = num;
     return result;
 }, {});
@@ -15,22 +16,27 @@ var opCodesInv = _.reduce(operationCodes, function(result, code, num) {
 var opCodeHandlers = {
     documentOperation: {
         fields: ['documentId', 'userId', 'documentRevision', 'operation'],
-        pack: function(args) {
-
+        pack: function(data) {
+            //console.log(data);
+            //if (typeof data.operation ==)
+            //data.operation = ot.TextOperation.prototype.toJSON.call(data.operation);
+            // TODO: flsdhfkjsahdgf
+            return data;
         },
         unpack: function(data) {
-
+            data.operation = ot.TextOperation.fromJSON(data.operation);
+            return data;
         }
+    },
+    userSelection: {
+        fields: ['documentId', 'userId', 'selection']
     }
 };
 
-var DocumentCommunicationHelper = function() {
-    EventEmitter.call(this);
-};
-_.extends(DocumentCommunicationHelper.prototype, EventEmitter.prototype);
+var DocumentCommunicationHelper = {};
 
-DocumentCommunicationHelper.prototype.eventIn = function(data) {
-    var opCode = opCodesInv[data[0]];
+DocumentCommunicationHelper.unpack = function(data) {
+    var opCode = opCodes[data[0]];
 
     if (!opCode) {
         console.error('opcode not recognized', data);
@@ -40,7 +46,7 @@ DocumentCommunicationHelper.prototype.eventIn = function(data) {
     var opCodeHandler = opCodeHandlers[opCode];
 
     var out = _.reduce(opCodeHandler.fields, function(result, name, num) {
-        result[name] = data[num];
+        result[name] = data[num + 1];
         return result;
     }, {});
 
@@ -50,20 +56,23 @@ DocumentCommunicationHelper.prototype.eventIn = function(data) {
         out = opCodeHandler.unpack(out);
     }
 
-    this.emit(opCode, out);
+    return out;
 };
-// TODO: Finish this later, I'm tired
-asdfasfs
-DocumentCommunicationHelper.prototype.eventOut = function(type, data) {
-    var opCodeHandler = opCodeHandlers[type];
+
+DocumentCommunicationHelper.pack = function(data, type) {
+    var oType = type || data.type;
+    var opCodeNumber = opCodesInv[oType];
+    var opCodeHandler = opCodeHandlers[oType];
 
     if (opCodeHandler.pack) {
-
+        data = opCodeHandler.pack(data);
     }
 
     var out = _.map(opCodeHandler.fields, function(name, num) {
-        return data[]
+        return data[name];
     });
+
+    return [opCodeNumber].concat(out);
 };
 
 module.exports = DocumentCommunicationHelper;
