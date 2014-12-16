@@ -64,7 +64,7 @@ OTServer.prototype.receiveOperation = function (data) {
 
             // Write results back to db
             multiWrite.exec(function(err, results) {
-                console.log("Processed: ", operationsLength + 1);
+                console.log("Processed operation: ", operationsLength + 1);
                 // ... and release lock
                 releaseLock();
             });

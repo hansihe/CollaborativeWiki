@@ -17,10 +17,9 @@ var opCodeHandlers = {
     documentOperation: {
         fields: ['documentId', 'userId', 'documentRevision', 'operation'],
         pack: function(data) {
-            //console.log(data);
-            //if (typeof data.operation ==)
-            //data.operation = ot.TextOperation.prototype.toJSON.call(data.operation);
-            // TODO: flsdhfkjsahdgf
+            if (data.operation.toJSON) {
+                data.operation = data.operation.toJSON();
+            }
             return data;
         },
         unpack: function(data) {
@@ -29,7 +28,23 @@ var opCodeHandlers = {
         }
     },
     userSelection: {
-        fields: ['documentId', 'userId', 'selection']
+        fields: ['documentId', 'userId', 'selection'],
+        pack: function(data) {
+            var selection = {
+                ranges: _.map(data.selection.ranges, function(range) {
+                    if (range.toJSON) {
+                        return range.toJSON();
+                    }
+                    return range;
+                })
+            };
+            data.selection = selection;
+            return data;
+        },
+        unpack: function(data) {
+            data.selection = ot.Selection.fromJSON(data.selection);
+            return data;
+        }
     }
 };
 

@@ -39,7 +39,6 @@ var ActionBarComponent = React.createClass({
     },
 
     getWikiLocation: function() {
-        console.log(this.getPath(), this.getRoutes(), this.getParams());
         if (this.getPath() == '/') {
             return 'index';
         }

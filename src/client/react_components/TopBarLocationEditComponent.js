@@ -29,7 +29,6 @@ var LocationEdit = React.createClass({
         });
     },
     revertValue: function() {
-        console.log(this.props.location);
         this.setState({
             location: this.props.location
         });

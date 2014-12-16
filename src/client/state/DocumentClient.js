@@ -60,11 +60,12 @@ DocumentClient.prototype.performClientOperation = function(operation) {
  * Transmits the new state to the server.
  */
 DocumentClient.prototype.performSelection = function(selection) {
-    this.stateManager.networkChannel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
+    this.manager.sendMessage({
+        type: 'userSelection',
         documentId: this.id,
         userId: null, // No reason to transmit this, the server ignores it.
         selection: selection
-    }));
+    });
 };
 
 DocumentClient.prototype.isConnected = function() {
@@ -147,10 +148,9 @@ DocumentClient.prototype.incomingServerOperation = function(ack, revision, opera
     } else {
         this.applyServer(operation);
     }
-    console.log("C <- S: ", this.id, ack, revision, operation);
 };
 
-DocumentClient.prototype.incomingServerSelection = function(userId, data) {
+DocumentClient.prototype.incomingServerSelection = function(data) {
     this.emit('selection', data);
 };
 

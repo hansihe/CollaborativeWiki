@@ -30,7 +30,6 @@ function ServerStateManager(stream) {
             multi.exec(function(err, results) {
                 if (document) {
                     var documentText = results[0] || "";
-                    console.log(results);
                     callback(true, results[1], documentText);
                 } else {
                     callback(false);
@@ -43,15 +42,13 @@ function ServerStateManager(stream) {
     this.channel.on('remote', function(remote) {
         console.log("connected");
 
-        clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, clientConnectionThis._receiveDocumentCursor.bind(clientConnectionThis));
+        //clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, clientConnectionThis._receiveDocumentCursor.bind(clientConnectionThis));
         clientConnectionThis.channel.pubsub.on('p', clientConnectionThis._receiveMessage.bind(clientConnectionThis));
     });
 }
 
 ServerStateManager.prototype._receiveMessage = function(message) {
     var data = CommunicationHelper.unpack(message);
-
-    console.log("woo", data);
 
     var document = ServerStateManager.getDocumentServer(data.documentId);
 
@@ -90,25 +87,13 @@ ServerStateManager.prototype._transmitDocumentOperation = function(id, operation
     });
 };
 
-ServerStateManager.prototype._receiveDocumentCursor = function(rawRepr) {
-    var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(rawRepr);
-
-    var document = ServerStateManager.getDocumentServer(selectionInfo.documentId);
-
-    document.receiveSelection({
-        id: selectionInfo.documentId,
-        senderUUID: this.uuid,
-        selection: selectionInfo.selection
-    });
-    console.log(JSON.stringify(selectionInfo));
-};
-
 ServerStateManager.prototype._transmitDocumentCursor = function(id, selection) {
-    this.channel.pubsub.publish(eventAliases.documentCursor, eventDataWrappers.selectionDataWrapper.packObject({
+    this._sendMessage({
+        type: 'userSelection',
         documentId: id,
         userId: selection.userId,
         selection: selection.selection
-    }));
+    });
 };
 
 var tempDocuments = {};

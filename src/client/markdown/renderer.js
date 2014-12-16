@@ -83,11 +83,11 @@ var types = {
     },
 
     htmlblock: function(tokens, startNum, token) {
-        console.log(token);
-        return [React.createElement(DocumentRendererComponent, {html: token.content}), startNum + 1];
+        // TODO
+        return [/*React.createElement(DocumentRendererComponent, {html: token.content})*/ null, startNum + 1];
     },
     htmltag: function(tokens, startNum, token) {
-        console.log(token);
+        // TODO
         return [null, startNum + 1];
     },
 

@@ -3,7 +3,7 @@ var http = require('http');
 var shoe = require('shoe');
 var dnode = require('dnode');
 var ot = require('ot');
-var ServerStateManager = require('./ServerStateManager');
+var ServerStateManager = require('./ConnectionDocumentManagerServer');
 var path = require('path');
 var _ = require('../shared/underscore');
 

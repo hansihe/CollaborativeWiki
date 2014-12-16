@@ -21,7 +21,7 @@ function DocumentClientManager(stateManager) {
     this.stateManager.on('networkReady', thisify(this._networkConnected, this));
     this.stateManager.on('networkDisconnected', thisify(this._networkDisconnected, this));
 
-    this.stateManager.networkChannel.pubsub.on(eventAliases.documentCursor, thisify(this._onDocumentSelection, this));
+    //this.stateManager.networkChannel.pubsub.on(eventAliases.documentCursor, thisify(this._onDocumentSelection, this));
     this.stateManager.networkChannel.pubsub.on('p', this._receiveMessage.bind(this));
 }
 
@@ -38,13 +38,14 @@ DocumentClientManager.prototype._receiveMessage = function(message) {
             client.incomingServerOperation(data.userId === this.stateManager.userId, data.documentRevision, data.operation);
             break;
         }
+        case 'userSelection': {
+            client.incomingServerSelection(data);
+            break;
+        }
     }
-
-    console.log("nm", data);
 };
 
 DocumentClientManager.prototype.sendMessage = function(data) {
-    console.log("MS", data);
     this.stateManager.networkChannel.pubsub.publish('p', CommunicationHelper.pack(data));
 };
 
@@ -52,7 +53,7 @@ DocumentClientManager.prototype.sendMessage = function(data) {
  * Called with the raw data when a selection is received over the network.
  * @private
  */
-DocumentClientManager.prototype._onDocumentSelection = function(repr) {
+/*DocumentClientManager.prototype._onDocumentSelection = function(repr) {
     var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(repr);
 
     var client = this.clients[selectionInfo.documentId];
@@ -62,7 +63,7 @@ DocumentClientManager.prototype._onDocumentSelection = function(repr) {
 
     var selection = ot.Selection.fromJSON(selectionInfo.selection);
     client.incomingServerSelection(selectionInfo.userId, selection);
-};
+};*/
 
 /**
  * Called by the onReady event on the stateManager.
