@@ -35,6 +35,9 @@ function ServerStateManager(stream) {
                     callback(false);
                 }
             });
+        },
+        documentOperation: function(id, callback) {
+
         }
     });
 

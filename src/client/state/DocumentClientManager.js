@@ -50,22 +50,6 @@ DocumentClientManager.prototype.sendMessage = function(data) {
 };
 
 /**
- * Called with the raw data when a selection is received over the network.
- * @private
- */
-/*DocumentClientManager.prototype._onDocumentSelection = function(repr) {
-    var selectionInfo = eventDataWrappers.selectionDataWrapper.unpack(repr);
-
-    var client = this.clients[selectionInfo.documentId];
-    if (!client) {
-        return;
-    }
-
-    var selection = ot.Selection.fromJSON(selectionInfo.selection);
-    client.incomingServerSelection(selectionInfo.userId, selection);
-};*/
-
-/**
  * Called by the onReady event on the stateManager.
  * @private
  */
