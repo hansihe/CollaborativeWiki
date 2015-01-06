@@ -1,4 +1,4 @@
-var ClientStateManager = require('./ClientStateManager');
+var ClientStateManager = require('./ClientState');
 
 module.exports = {
     stateManager: new ClientStateManager()

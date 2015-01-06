@@ -1,13 +1,10 @@
-var DocumentServer = require('./DocumentServer');
 var NetworkChannel = require('./../shared/NetworkChannel');
 var ot = require('ot');
 var uuid = require('node-uuid');
 var services = require('./serviceManager');
-var eventAliases = require('./../shared/eventAliases');
-var eventDataWrappers = require('./../shared/eventDataWrappers');
-var CommunicationHelper = require('../shared/DocumentCommunicationHelper');
+var documentServerManager = require('./documentServerManager');
 
-function ServerStateManager(stream) {
+function ConnectionState(stream) {
     var clientConnectionThis = this;
 
     this.uuid = uuid.v4();
@@ -17,7 +14,7 @@ function ServerStateManager(stream) {
             callback(clientConnectionThis.uuid);
         },
         initDocumentChannel: function(id, callback) {
-            var document = ServerStateManager.getDocumentServer(id);
+            var document = documentServerManager.getDocumentServer(id);
 
             document.documentWrapper.subscribe(clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis, id));
             document.documentWrapper.subscribeSelection(clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis, id));
@@ -36,10 +33,12 @@ function ServerStateManager(stream) {
                 }
             });
         },
+        disconnectDocument: function(documentId) {
+            var document = documentServerManager.getDocumentServer(documentId);
+            // TODO: unsubscribe from pubsub and stuff
+        },
         documentOperation: function(documentId, revision, operation) {
-            var document = ServerStateManager.getDocumentServer(documentId);
-
-
+            var document = documentServerManager.getDocumentServer(documentId);
             document.receiveOperation({
                 id: documentId,
                 revision: revision,
@@ -48,7 +47,7 @@ function ServerStateManager(stream) {
             });
         },
         documentSelection: function(documentId, selection) {
-            var document = ServerStateManager.getDocumentServer(documentId);
+            var document = documentServerManager.getDocumentServer(documentId);
             document.receiveSelection({
                 id: documentId,
                 senderUUID: clientConnectionThis.uuid,
@@ -60,29 +59,15 @@ function ServerStateManager(stream) {
     // Confirmed connection
     this.channel.on('remote', function(remote) {
         console.log("connected");
-
-        //clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, clientConnectionThis._receiveDocumentCursor.bind(clientConnectionThis));
-        //clientConnectionThis.channel.pubsub.on('p', clientConnectionThis._receiveMessage.bind(clientConnectionThis));
     });
 }
 
-ServerStateManager.prototype._transmitDocumentOperation = function(id, operation) {
+ConnectionState.prototype._transmitDocumentOperation = function(id, operation) {
     this.channel.rpcRemote.documentOperation(id, operation.senderUUID, operation.revision, operation.operation);
 };
 
-ServerStateManager.prototype._transmitDocumentCursor = function(id, selection) {
+ConnectionState.prototype._transmitDocumentCursor = function(id, selection) {
     this.channel.rpcRemote.documentSelection(id, selection.userId, selection.selection);
 };
 
-var tempDocuments = {};
-
-ServerStateManager.getDocumentServer = function(documentId) {
-    var document = tempDocuments[documentId];
-    if (!document) {
-        document = new DocumentServer(documentId);
-        tempDocuments[documentId] = document;
-    }
-    return document;
-};
-
-module.exports = ServerStateManager;
+module.exports = ConnectionState;

@@ -27,6 +27,10 @@ RedisDocumentWrapper.prototype.lock = function(task) {
 RedisDocumentWrapper.prototype.subscribe = function(listener) {
     services.redisClient.subscribe(this.propertyNames.stream, listener);
 };
+RedisDocumentWrapper.prototype.unSubscribe = function() {
+    services.redisClient.unSubscribe()
+};
+
 RedisDocumentWrapper.prototype.subscribeSelection = function(listener) {
     services.redisClient.subscribe(this.propertyNames.selectionStream, listener);
 };

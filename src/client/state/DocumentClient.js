@@ -2,9 +2,6 @@ var ot = require('ot');
 var _ = require('../../shared/underscore');
 var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
-var eventAliases = require('../../shared/eventAliases');
-var eventDataWrappers = require('../../shared/eventDataWrappers');
-
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -48,6 +45,16 @@ DocumentClient.prototype.getInitialState = function(callback) {
 };
 
 /**
+ * Disconnects/destroys this DocumentClient.
+ * Please note that although it might not get disconnected immediately, it is unsafe to use this DocumentClient once
+ * this has been called.
+ * Should NOT be called by anything other than DocumentClientManager.destroyClient under normal circumstances.
+ */
+DocumentClient.prototype.destroyDocument = function() {
+    this.stateManager.networkChannel.rpcRemote.disconnectDocument(this.id);
+};
+
+/**
  * Called by an editor when an edit is performed.
  * Updates the document, performs various OT magics, and transmits to the server.
  */
@@ -60,13 +67,6 @@ DocumentClient.prototype.performClientOperation = function(operation) {
  * Transmits the new state to the server.
  */
 DocumentClient.prototype.performSelection = function(selection) {
-    /*this.manager.sendMessage({
-        type: 'userSelection',
-        documentId: this.id,
-        userId: null, // No reason to transmit this, the server ignores it.
-        selection: selection
-    });*/
-    console.log(this.stateManager.networkChannel.rpc);
     this.stateManager.networkChannel.rpcRemote.documentSelection(this.id, selection);
 };
 
@@ -104,10 +104,6 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
     this.document = document;
     this.handshaken = true;
 
-    /* this.applyOperation = function(operation) {
-        this.emit('applyOperation', operation);
-    }; */
-
     this.text = document;
 
     this.emit('remote');
@@ -122,13 +118,6 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
     this.text = operation.apply(this.text);
     this.emit('documentChange');
 
-    /*this.manager.sendMessage({
-        type: 'documentOperation',
-        documentId: this.id,
-        userId: null,
-        documentRevision: revision,
-        operation: operation
-    });*/
     this.stateManager.networkChannel.rpcRemote.documentOperation(this.id, revision, operation);
 };
 
@@ -154,7 +143,7 @@ DocumentClient.prototype.incomingServerOperation = function(ack, revision, opera
 };
 
 DocumentClient.prototype.incomingServerSelection = function(data) {
-    this.emit('selection', data);
+    //this.emit('selection', data);
 };
 
 module.exports = DocumentClient;

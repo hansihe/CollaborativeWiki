@@ -30,6 +30,10 @@ var CodeMirrorDocumentEditor = React.createClass({
     componentWillReceiveProps: function(nextProps) {
         this.setDocument(nextProps.documentId);
     },
+    componentWillUnmount: function() {
+        services.stateManager.documentClientManager.destroyClient(this, this.document);
+    },
+
     setDocument: function(documentId) {
         var componentThis = this;
 
@@ -45,9 +49,10 @@ var CodeMirrorDocumentEditor = React.createClass({
             this.editorDocumentAdapter.detach();
             this.editor.setValue('');
             this.document.removeListener('applyOperation', this.onApplyOperation);
+            services.stateManager.documentClientManager.destroyClient(this, this.document);
         }
 
-        this.document = services.stateManager.documentClientManager.requestClient(documentId);
+        this.document = services.stateManager.documentClientManager.requestClient(this, documentId);
         this.cancelStateCallback = this.document.getInitialState(function() {
             componentThis.setDocumentClientOnEditor(componentThis.editor, componentThis.document);
 

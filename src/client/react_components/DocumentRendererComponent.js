@@ -25,9 +25,10 @@ var DocumentRenderer = React.createClass({
 
         if (this.document) {
             this.document.removeListener('documentChange', this.onDocumentChange);
+            services.stateManager.documentClientManager.destroyClient(this, this.document);
         }
 
-        this.document = services.stateManager.documentClientManager.requestClient(documentId);
+        this.document = services.stateManager.documentClientManager.requestClient(this, documentId);
         this.cancelStateCallback = this.document.getInitialState(function() {
             componentThis.document.on('documentChange', componentThis.onDocumentChange);
             componentThis.setState({
@@ -40,6 +41,9 @@ var DocumentRenderer = React.createClass({
     },
     componentWillReceiveProps: function(nextProps) {
         this.setDocument(nextProps.documentId);
+    },
+    componentWillUnmount: function() {
+        services.stateManager.documentClientManager.destroyClient(this, this.document);
     },
 
     onDocumentChange: function() {

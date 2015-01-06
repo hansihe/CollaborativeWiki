@@ -19,8 +19,8 @@ function rewireEvent(source, type, destination, destinationType) {
  * * documentClientManager - manages and provides DocumentClients
  * @constructor
  */
-function ClientStateManager() {
-    var clientStateManagerThis = this;
+function ClientState() {
+    var ClientStateThis = this;
 
     this.userId = undefined;
 
@@ -31,10 +31,10 @@ function ClientStateManager() {
         // RPC
         documentOperation: function(documentId, senderUUID, revision, operation) {
             var operationObj = ot.TextOperation.fromJSON(operation);
-            clientStateManagerThis.emit('documentOperation', documentId, senderUUID, revision, operationObj);
+            ClientStateThis.emit('documentOperation', documentId, senderUUID, revision, operationObj);
         },
         documentSelection: function(documentId, userUUID, selection) {
-            clientStateManagerThis.emit('documentSelection', documentId, userUUID, selection);
+            ClientStateThis.emit('documentSelection', documentId, userUUID, selection);
         }
     });
 
@@ -47,14 +47,14 @@ function ClientStateManager() {
     this.on('networkReady', thisify(this._onNetworkReady, this));
     this.on('networkDisconnected', thisify(this._onNetworkDisconnected, this));
 }
-_.extend(ClientStateManager.prototype, EventEmitter.prototype);
+_.extend(ClientState.prototype, EventEmitter.prototype);
 
 /**
  * Called on the networkConnected event.
  * When this event is fired, we have a fully functional socket to the server, however we haven't performed handshake
  * yet.
  */
-ClientStateManager.prototype._onNetworkConnected = function() {
+ClientState.prototype._onNetworkConnected = function() {
     console.log('connect');
 
     this.networkChannel.rpcRemote.handshake(thisify(this.handshakeCallback, this));
@@ -64,7 +64,7 @@ ClientStateManager.prototype._onNetworkConnected = function() {
  * Used as a callback for the server, response to the handshake.
  * @param userId
  */
-ClientStateManager.prototype.handshakeCallback = function(userId) {
+ClientState.prototype.handshakeCallback = function(userId) {
     this.emit('networkReady');
 
     this.userId = userId;
@@ -76,7 +76,7 @@ ClientStateManager.prototype.handshakeCallback = function(userId) {
  * available.
  * When this is called, you should probably start preparing for normal operation.
  */
-ClientStateManager.prototype._onNetworkReady = function() {
+ClientState.prototype._onNetworkReady = function() {
     console.log('ready');
 };
 
@@ -84,8 +84,8 @@ ClientStateManager.prototype._onNetworkReady = function() {
  * Called on the networkDisconnected event.
  * Should prepare to receive a new onConnected event.
  */
-ClientStateManager.prototype._onNetworkDisconnected = function() {
+ClientState.prototype._onNetworkDisconnected = function() {
     console.log('disconnect');
 };
 
-module.exports = ClientStateManager;
+module.exports = ClientState;

@@ -3,11 +3,9 @@ var http = require('http');
 var shoe = require('shoe');
 var dnode = require('dnode');
 var ot = require('ot');
-var ServerStateManager = require('./ConnectionDocumentManagerServer');
+var ConnectionState = require('./ConnectionState');
 var path = require('path');
 var _ = require('../shared/underscore');
-
-require('../shared/DocumentCommunicationHelper');
 
 exports.makeServer = function(config) {
     var app = express();
@@ -20,7 +18,7 @@ exports.makeServer = function(config) {
     });
 
     var sock = shoe(function(s) {
-        new ServerStateManager(s);
+        new ConnectionState(s);
     });
     sock.install(httpServer, '/endpoint');
 
