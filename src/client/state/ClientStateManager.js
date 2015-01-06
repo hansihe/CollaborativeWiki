@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 var shoe = require('shoe');
 var thisify = require('../../shared/thisify');
 var _ = require('../../shared/underscore');
+var ot = require('ot');
 
 function rewireEvent(source, type, destination, destinationType) {
     destinationType = destinationType || type;
@@ -19,6 +20,8 @@ function rewireEvent(source, type, destination, destinationType) {
  * @constructor
  */
 function ClientStateManager() {
+    var clientStateManagerThis = this;
+
     this.userId = undefined;
 
     EventEmitter.call(this);
@@ -26,6 +29,13 @@ function ClientStateManager() {
     this.sock = shoe('/endpoint');
     this.networkChannel = new NetworkChannel(this.sock, {
         // RPC
+        documentOperation: function(documentId, senderUUID, revision, operation) {
+            var operationObj = ot.TextOperation.fromJSON(operation);
+            clientStateManagerThis.emit('documentOperation', documentId, senderUUID, revision, operationObj);
+        },
+        documentSelection: function(documentId, userUUID, selection) {
+            clientStateManagerThis.emit('documentSelection', documentId, userUUID, selection);
+        }
     });
 
     rewireEvent(this.networkChannel, 'connected', this, 'networkConnected');

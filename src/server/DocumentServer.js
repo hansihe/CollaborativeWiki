@@ -17,7 +17,7 @@ _.extend(OTServer.prototype, EventEmitter.prototype);
 
 OTServer.prototype.receiveOperation = function (data) {
     var otThis = this;
-    var operation = data.operation;
+    var operation = ot.TextOperation.fromJSON(data.operation);
     var revision = data.revision;
 
     // Obtain lock on document

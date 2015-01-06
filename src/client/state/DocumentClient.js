@@ -60,12 +60,14 @@ DocumentClient.prototype.performClientOperation = function(operation) {
  * Transmits the new state to the server.
  */
 DocumentClient.prototype.performSelection = function(selection) {
-    this.manager.sendMessage({
+    /*this.manager.sendMessage({
         type: 'userSelection',
         documentId: this.id,
         userId: null, // No reason to transmit this, the server ignores it.
         selection: selection
-    });
+    });*/
+    console.log(this.stateManager.networkChannel.rpc);
+    this.stateManager.networkChannel.rpcRemote.documentSelection(this.id, selection);
 };
 
 DocumentClient.prototype.isConnected = function() {
@@ -120,13 +122,14 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
     this.text = operation.apply(this.text);
     this.emit('documentChange');
 
-    this.manager.sendMessage({
+    /*this.manager.sendMessage({
         type: 'documentOperation',
         documentId: this.id,
         userId: null,
         documentRevision: revision,
         operation: operation
-    });
+    });*/
+    this.stateManager.networkChannel.rpcRemote.documentOperation(this.id, revision, operation);
 };
 
 /**

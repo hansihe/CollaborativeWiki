@@ -21,11 +21,33 @@ function DocumentClientManager(stateManager) {
     this.stateManager.on('networkReady', thisify(this._networkConnected, this));
     this.stateManager.on('networkDisconnected', thisify(this._networkDisconnected, this));
 
+    this.stateManager.on('documentOperation', this._receiveDocumentOperation.bind(this));
+    this.stateManager.on('documentSelection', this._receiveDocumentSelection.bind(this));
+
     //this.stateManager.networkChannel.pubsub.on(eventAliases.documentCursor, thisify(this._onDocumentSelection, this));
-    this.stateManager.networkChannel.pubsub.on('p', this._receiveMessage.bind(this));
+    //this.stateManager.networkChannel.pubsub.on('p', this._receiveMessage.bind(this));
 }
 
-DocumentClientManager.prototype._receiveMessage = function(message) {
+function getClient(manager, documentId) {
+    var client = manager.clients[documentId];
+    if (!client) {
+        console.error("received event for nonexistent document: ", documentId);
+    }
+    return client;
+}
+
+DocumentClientManager.prototype._receiveDocumentOperation = function(documentId, senderUUID, revision, operation) {
+    var client = getClient(this, documentId);
+    client.incomingServerOperation(senderUUID == this.stateManager.userId, revision, operation);
+};
+
+DocumentClientManager.prototype._receiveDocumentSelection = function(documentId) {
+    var client = getClient(this, documentId);
+
+    //client.incomingServerSelection();
+};
+
+/*DocumentClientManager.prototype._receiveMessage = function(message) {
     var data = CommunicationHelper.unpack(message);
 
     var client = this.clients[data.documentId];
@@ -43,11 +65,11 @@ DocumentClientManager.prototype._receiveMessage = function(message) {
             break;
         }
     }
-};
+};*/
 
-DocumentClientManager.prototype.sendMessage = function(data) {
+/*DocumentClientManager.prototype.sendMessage = function(data) {
     this.stateManager.networkChannel.pubsub.publish('p', CommunicationHelper.pack(data));
-};
+};*/
 
 /**
  * Called by the onReady event on the stateManager.

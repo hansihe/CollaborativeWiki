@@ -36,8 +36,24 @@ function ServerStateManager(stream) {
                 }
             });
         },
-        documentOperation: function(id, callback) {
+        documentOperation: function(documentId, revision, operation) {
+            var document = ServerStateManager.getDocumentServer(documentId);
 
+
+            document.receiveOperation({
+                id: documentId,
+                revision: revision,
+                senderUUID: clientConnectionThis.uuid,
+                operation: operation
+            });
+        },
+        documentSelection: function(documentId, selection) {
+            var document = ServerStateManager.getDocumentServer(documentId);
+            document.receiveSelection({
+                id: documentId,
+                senderUUID: clientConnectionThis.uuid,
+                selection: selection
+            });
         }
     });
 
@@ -46,57 +62,16 @@ function ServerStateManager(stream) {
         console.log("connected");
 
         //clientConnectionThis.channel.pubsub.on(eventAliases.documentCursor, clientConnectionThis._receiveDocumentCursor.bind(clientConnectionThis));
-        clientConnectionThis.channel.pubsub.on('p', clientConnectionThis._receiveMessage.bind(clientConnectionThis));
+        //clientConnectionThis.channel.pubsub.on('p', clientConnectionThis._receiveMessage.bind(clientConnectionThis));
     });
 }
 
-ServerStateManager.prototype._receiveMessage = function(message) {
-    var data = CommunicationHelper.unpack(message);
-
-    var document = ServerStateManager.getDocumentServer(data.documentId);
-
-    switch (data.type) {
-        case 'documentOperation': {
-            document.receiveOperation({
-                id: data.documentId,
-                revision: data.documentRevision,
-                senderUUID: this.uuid,
-                operation: data.operation
-            });
-            break;
-        }
-        case 'userSelection': {
-            document.receiveSelection({
-                id: data.documentId,
-                senderUUID: this.uuid,
-                selection: data.selection
-            });
-            break;
-        }
-    }
-};
-
-ServerStateManager.prototype._sendMessage = function(data) {
-    this.channel.pubsub.publish('p', CommunicationHelper.pack(data));
-};
-
 ServerStateManager.prototype._transmitDocumentOperation = function(id, operation) {
-    this._sendMessage({
-        type: 'documentOperation',
-        documentId: id,
-        userId: operation.senderUUID,
-        documentRevision: operation.revision,
-        operation: operation.operation
-    });
+    this.channel.rpcRemote.documentOperation(id, operation.senderUUID, operation.revision, operation.operation);
 };
 
 ServerStateManager.prototype._transmitDocumentCursor = function(id, selection) {
-    this._sendMessage({
-        type: 'userSelection',
-        documentId: id,
-        userId: selection.userId,
-        selection: selection.selection
-    });
+    this.channel.rpcRemote.documentSelection(id, selection.userId, selection.selection);
 };
 
 var tempDocuments = {};
