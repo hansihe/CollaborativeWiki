@@ -1,13 +1,19 @@
 var NetworkChannel = require('./../shared/NetworkChannel');
+var EventEmitter = require('events').EventEmitter;
 var ot = require('ot');
+var _ = require('../shared/underscore');
 var uuid = require('node-uuid');
 var services = require('./serviceManager');
 var documentServerManager = require('./documentServerManager');
 
 function ConnectionState(stream) {
     var clientConnectionThis = this;
+    EventEmitter.call(this);
 
     this.uuid = uuid.v4();
+
+    clientConnectionThis.boundDocumentOperationTransmitter = clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis);
+    clientConnectionThis.boundDocumentSelectionTransmitter = clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis);
 
     this.channel = new NetworkChannel(stream, {
         handshake: function(callback) {
@@ -16,13 +22,13 @@ function ConnectionState(stream) {
         initDocumentChannel: function(id, callback) {
             var document = documentServerManager.getDocumentServer(id);
 
-            document.documentWrapper.subscribe(clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis, id));
-            document.documentWrapper.subscribeSelection(clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis, id));
+            document.on("operation", clientConnectionThis.boundDocumentOperationTransmitter);
+            document.on("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
 
             var multi = services.redisClient.redisConnection.multi();
 
-            multi.get(document.documentWrapper.propertyNames['document']);
-            multi.llen(document.documentWrapper.propertyNames['operations']);
+            multi.get(document.propertyNames['document']);
+            multi.llen(document.propertyNames['operations']);
 
             multi.exec(function(err, results) {
                 if (document) {
@@ -35,7 +41,9 @@ function ConnectionState(stream) {
         },
         disconnectDocument: function(documentId) {
             var document = documentServerManager.getDocumentServer(documentId);
-            // TODO: unsubscribe from pubsub and stuff
+
+            document.removeListener("operation", clientConnectionThis.boundDocumentOperationTransmitter);
+            document.removeListener("selection", clientConnectionThis.boundDocumentSelectionTransmitter)
         },
         documentOperation: function(documentId, revision, operation) {
             var document = documentServerManager.getDocumentServer(documentId);
@@ -61,13 +69,14 @@ function ConnectionState(stream) {
         console.log("connected");
     });
 }
+_.extend(ConnectionState.prototype, EventEmitter.prototype);
 
-ConnectionState.prototype._transmitDocumentOperation = function(id, operation) {
-    this.channel.rpcRemote.documentOperation(id, operation.senderUUID, operation.revision, operation.operation);
+ConnectionState.prototype._transmitDocumentOperation = function(id, revision, userID, operation) {
+    this.channel.rpcRemote.documentOperation(id, userID, revision, operation);
 };
 
-ConnectionState.prototype._transmitDocumentCursor = function(id, selection) {
-    this.channel.rpcRemote.documentSelection(id, selection.userId, selection.selection);
+ConnectionState.prototype._transmitDocumentCursor = function(id, userID, selection) {
+    this.channel.rpcRemote.documentSelection(id, userID, selection);
 };
 
 module.exports = ConnectionState;

@@ -1,17 +1,31 @@
-var util = require('util');
-var otOrig = require('ot');
 var EventEmitter = require('events').EventEmitter;
 var _ = require('./../shared/underscore');
-var DocumentWrapper = require('./RedisDocumentWrapper');
 var services = require('./serviceManager');
 var ot = require('ot');
 
 function OTServer(name) {
+    var otServerThis = this;
+    EventEmitter.call(this);
+
     this.name = name;
 
-    this.documentWrapper = new DocumentWrapper(name);
+    this.propertyNames = _.reduce(
+        {
+            document: 'documentText',
+            operations: 'operations',
+            lock: 'lock',
+            operationStream: 'operationStream',
+            selectionStream: 'selectionStream'
+        },
+        function(result, value, key) {
+            result[key] = otServerThis.name + "_" + value;
+            return result;
+        },
+        {}
+    );
 
-    EventEmitter.call(this);
+    services.redisClient.subscribe(this.propertyNames.operationStream, this._receiveOperation.bind(this));
+    services.redisClient.subscribe(this.propertyNames.selectionStream, this._receiveSelection.bind(this));
 }
 _.extend(OTServer.prototype, EventEmitter.prototype);
 
@@ -21,13 +35,13 @@ OTServer.prototype.receiveOperation = function (data) {
     var revision = data.revision;
 
     // Obtain lock on document
-    this.documentWrapper.lock(function(releaseLock) {
+    this.lock(function(releaseLock) {
 
         var multiRead = services.redisClient.redisConnection.multi();
 
-        multiRead.get(otThis.documentWrapper.propertyNames.document);
-        multiRead.llen(otThis.documentWrapper.propertyNames.operations);
-        multiRead.lrange(otThis.documentWrapper.propertyNames.operations, revision, -1);
+        multiRead.get(otThis.propertyNames.document);
+        multiRead.llen(otThis.propertyNames.operations);
+        multiRead.lrange(otThis.propertyNames.operations, revision, -1);
 
         // Fetch data necessary for transformation
         multiRead.exec(function(err, results) {
@@ -54,13 +68,13 @@ OTServer.prototype.receiveOperation = function (data) {
             //otThis.operations.push(operation.toJSON());
 
             var multiWrite = services.redisClient.redisConnection.multi();
-            multiWrite.set(otThis.documentWrapper.propertyNames.document, document);
-            multiWrite.rpush(otThis.documentWrapper.propertyNames.operations, operation.toJSON());
+            multiWrite.set(otThis.propertyNames.document, document);
+            multiWrite.rpush(otThis.propertyNames.operations, operation.toJSON());
 
             var message = data || {};
             message['operation'] = operation.toJSON();
             message['revision'] = operationsLength + 1;
-            multiWrite.publish(otThis.documentWrapper.propertyNames.stream, JSON.stringify(message));
+            multiWrite.publish(otThis.propertyNames.operationStream, JSON.stringify(message));
 
             // Write results back to db
             multiWrite.exec(function(err, results) {
@@ -78,11 +92,22 @@ OTServer.prototype.receiveSelection = function(data) {
     var multiWrite = services.redisClient.redisConnection.multi();
 
     var message = data || {};
-    multiWrite.publish(otThis.documentWrapper.propertyNames.selectionStream, JSON.stringify(message));
+    multiWrite.publish(otThis.propertyNames.selectionStream, JSON.stringify(message));
 
     multiWrite.exec(function(err, results) {
         console.log("Published selection.");
     });
+};
+
+OTServer.prototype._receiveOperation = function(data) {
+    this.emit("operation", data.id, data.revision, data.senderUUID, data.operation);
+};
+OTServer.prototype._receiveSelection = function(data) {
+    this.emit("selection", data.id, data.senderUUID, data.selection);
+};
+
+OTServer.prototype.lock = function(task) {
+    services.redisClient.lock(this.propertyNames['lock'], task);
 };
 
 module.exports = OTServer;
