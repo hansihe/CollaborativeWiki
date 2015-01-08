@@ -38,12 +38,16 @@ function ConnectionState(stream) {
                     callback(false);
                 }
             });
+
+            document.userEditingVisit(clientConnectionThis.uuid);
         },
         disconnectDocument: function(documentId) {
             var document = documentServerManager.getDocumentServer(documentId);
 
             document.removeListener("operation", clientConnectionThis.boundDocumentOperationTransmitter);
-            document.removeListener("selection", clientConnectionThis.boundDocumentSelectionTransmitter)
+            document.removeListener("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
+
+            document.endUserEditingVisit(clientConnectionThis.uuid);
         },
         documentOperation: function(documentId, revision, operation) {
             var document = documentServerManager.getDocumentServer(documentId);
@@ -67,6 +71,10 @@ function ConnectionState(stream) {
     // Confirmed connection
     this.channel.on('remote', function(remote) {
         console.log("connected");
+    });
+
+    this.channel.on('end', function() {
+
     });
 }
 _.extend(ConnectionState.prototype, EventEmitter.prototype);
