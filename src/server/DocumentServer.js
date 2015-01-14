@@ -31,16 +31,23 @@ function OTServer(name) {
         {}
     );
 
-    services.redisClient.subscribe(this.propertyNames.operationStream, this._receiveOperation.bind(this));
-    services.redisClient.subscribe(this.propertyNames.selectionStream, this._receiveSelection.bind(this));
+    this.localClients = [];
+
+    services.redisClient.subscribe(this.propertyNames.operationStream, this.onGlobalOperation.bind(this));
+    services.redisClient.subscribe(this.propertyNames.selectionStream, this.onGlobalSelection.bind(this));
+    services.redisClient.subscribe(this.propertyNames.userStream, this.onGlobalUserEvent.bind(this));
 
     setInterval(function() {
+        console.log(otServerThis.localClients);
+        for (var i = 0; i < otServerThis.localClients.length; i++) {
+            otServerThis.userEditingVisit(otServerThis.localClients[i]);
+        }
         otServerThis.removeTimedoutEditingVisits();
     }, 5000);
 }
 _.extend(OTServer.prototype, EventEmitter.prototype);
 
-OTServer.prototype.receiveOperation = function (data) {
+OTServer.prototype.processLocalUserOperation = function (data) {
     var otThis = this;
     var operation = ot.TextOperation.fromJSON(data.operation);
     var revision = data.revision;
@@ -107,6 +114,19 @@ OTServer.prototype.receiveOperation = function (data) {
     });
 };
 
+OTServer.prototype.localUserJoin = function(userID) {
+    if (_.indexOf(this.localClients, userID) == -1) {
+        this.localClients.push(userID);
+    }
+    this.userEditingVisit(userID);
+};
+OTServer.prototype.localUserLeave = function(userID) {
+    _.remove(this.localClients, function(value) {
+        return value == userID;
+    });
+    this.endUserEditingVisit(userID);
+};
+
 OTServer.prototype.userEditingVisit = function(userID) {
     var otServerThis = this;
 
@@ -149,6 +169,7 @@ OTServer.prototype.removeTimedoutEditingVisits = function() {
                     'action': 'leave',
                     'userID': usersTimedOut[i]
                 }));
+                console.log("timeout", usersTimedOut[i]);
             }
             multi.exec(function(err, results) {
                 releaseLock();
@@ -170,7 +191,7 @@ OTServer.prototype.endUserEditingVisit = function(userID) {
     });
 };
 
-OTServer.prototype.receiveSelection = function(data) {
+OTServer.prototype.processLocalUserSelection = function(data) {
     var otThis = this;
 
     var multiWrite = services.redisClient.redisConnection.multi();
@@ -183,11 +204,14 @@ OTServer.prototype.receiveSelection = function(data) {
     });
 };
 
-OTServer.prototype._receiveOperation = function(data) {
+OTServer.prototype.onGlobalOperation = function(data) {
     this.emit("operation", data.id, data.revision, data.senderUUID, data.operation);
 };
-OTServer.prototype._receiveSelection = function(data) {
+OTServer.prototype.onGlobalSelection = function(data) {
     this.emit("selection", data.id, data.senderUUID, data.selection);
+};
+OTServer.prototype.onGlobalUserEvent = function(data) {
+    console.log(data);
 };
 
 OTServer.prototype.lock = function(task) {

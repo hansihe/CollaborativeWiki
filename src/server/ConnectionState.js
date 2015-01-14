@@ -11,6 +11,9 @@ function ConnectionState(stream) {
     EventEmitter.call(this);
 
     this.uuid = uuid.v4();
+    console.log("create connection state", this.uuid);
+
+    this.joinedDocuments = [];
 
     clientConnectionThis.boundDocumentOperationTransmitter = clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis);
     clientConnectionThis.boundDocumentSelectionTransmitter = clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis);
@@ -21,6 +24,11 @@ function ConnectionState(stream) {
         },
         initDocumentChannel: function(id, callback) {
             var document = documentServerManager.getDocumentServer(id);
+
+            if (_.indexOf(clientConnectionThis.joinedDocuments, document) != -1) {
+                throw "Document already joined";
+                // TODO: Handle error case
+            }
 
             document.on("operation", clientConnectionThis.boundDocumentOperationTransmitter);
             document.on("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
@@ -39,19 +47,27 @@ function ConnectionState(stream) {
                 }
             });
 
-            document.userEditingVisit(clientConnectionThis.uuid);
+            clientConnectionThis.joinedDocuments.push(document);
+            document.localUserJoin(clientConnectionThis.uuid);
         },
         disconnectDocument: function(documentId) {
             var document = documentServerManager.getDocumentServer(documentId);
 
+            if (_.indexOf(clientConnectionThis.joinedDocuments, document) == -1) {
+                throw "Can't leave unjoined document.";
+            }
+
             document.removeListener("operation", clientConnectionThis.boundDocumentOperationTransmitter);
             document.removeListener("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
 
-            document.endUserEditingVisit(clientConnectionThis.uuid);
+            _.remove(clientConnectionThis.joinedDocuments, function(value) {
+                return value === document;
+            });
+            document.localUserLeave(clientConnectionThis.uuid);
         },
         documentOperation: function(documentId, revision, operation) {
             var document = documentServerManager.getDocumentServer(documentId);
-            document.receiveOperation({
+            document.processLocalUserOperation({
                 id: documentId,
                 revision: revision,
                 senderUUID: clientConnectionThis.uuid,
@@ -60,7 +76,7 @@ function ConnectionState(stream) {
         },
         documentSelection: function(documentId, selection) {
             var document = documentServerManager.getDocumentServer(documentId);
-            document.receiveSelection({
+            document.processLocalUserSelection({
                 id: documentId,
                 senderUUID: clientConnectionThis.uuid,
                 selection: selection
@@ -71,10 +87,15 @@ function ConnectionState(stream) {
     // Confirmed connection
     this.channel.on('remote', function(remote) {
         console.log("connected");
+
     });
 
     this.channel.on('end', function() {
-
+        for (var i = 0; i < clientConnectionThis.joinedDocuments; i++) {
+            var document = clientConnectionThis.joinedDocuments[i];
+            document.localUserLeave(clientConnectionThis.uuid);
+        }
+        clientConnectionThis.joinedDocuments = [];
     });
 }
 _.extend(ConnectionState.prototype, EventEmitter.prototype);
