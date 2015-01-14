@@ -5,6 +5,7 @@ var _ = require('../../shared/underscore');
 var DisplayModeSelectorComponent = require('./DisplayModeSelectorComponent');
 var CodeMirrorDocumentEditorComponent = require('./CodeMirrorDocumentEditorComponent');
 var DocumentRendererComponent = require('./DocumentRendererComponent');
+var SideBarDocument = require('./SideBarComponent');
 
 var services = require('../state/serviceManager');
 
@@ -22,6 +23,7 @@ var DocumentEditComponent = React.createClass({
                 <DocumentRendererComponent
                     documentId={documentId}
                     style={{flex: "1 0 0", borderLeft: "solid 1px #ddd", paddingLeft: "10px", overflowY: "scroll"}}/>
+                <SideBarDocument/>
             </div>
         );
     }
