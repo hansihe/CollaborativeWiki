@@ -1,6 +1,6 @@
 var react = require('react');
 
-var TopBarComponent = require('./TopBarComponent');
+var TopBarComponent = require('./ComponentTopBar');
 var RouteHandler = require('react-router').RouteHandler;
 
 var AppComponent = react.createClass({

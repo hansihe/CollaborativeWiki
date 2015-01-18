@@ -3,7 +3,7 @@ var ReactRouter = require('react-router');
 
 var Link = require('react-router').Link;
 
-var TopBarLocationEditComponent = require('./TopBarLocationEditComponent');
+var TopBarLocationEditComponent = require('./ComponentTopBarLocationEdit');
 
 var ActionBarComponent = React.createClass({
     mixins: [ReactRouter.State, ReactRouter.Navigation],

@@ -3,6 +3,7 @@ var renderer = require('../markdown/renderer');
 var services = require('../state/serviceManager');
 
 var DocumentRenderer = React.createClass({
+    mixins: [React.PureRenderMixin],
     getInitialState: function() {
         return {
             markdown: ''
@@ -31,9 +32,7 @@ var DocumentRenderer = React.createClass({
         this.document = services.stateManager.documentClientManager.requestClient(this, documentId);
         this.cancelStateCallback = this.document.getInitialState(function() {
             componentThis.document.on('documentChange', componentThis.onDocumentChange);
-            componentThis.setState({
-                markdown: componentThis.document.text
-            });
+            componentThis.setMarkdown(componentThis.document.text);
         });
     },
     componentDidMount: function() {
@@ -47,8 +46,13 @@ var DocumentRenderer = React.createClass({
     },
 
     onDocumentChange: function() {
+        this.setMarkdown(this.document.text);
+    },
+
+    setMarkdown: function(markdown) {
+        console.log();
         this.setState({
-            markdown: this.document.text
+            markdown: markdown
         });
     }
 });

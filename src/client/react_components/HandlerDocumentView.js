@@ -2,8 +2,7 @@ var React = require('react');
 var ReactRouter = require('react-router');
 var _ = require('../../shared/underscore');
 
-var DocumentRendererComponent = require('./DocumentRendererComponent');
-var DisplayModeSelectorComponent = require('./DisplayModeSelectorComponent');
+var DocumentRendererComponent = require('./ComponentDocumentRenderer');
 
 var services = require('../state/serviceManager');
 
@@ -13,8 +12,7 @@ var DocumentViewComponent = React.createClass({
     render: function() {
         var documentId = this.getParams().documentId || 'index';
         return (
-            <div style={{height: "100%", overflowY: "scroll", paddingTop: "20px", position: "relative"}}>
-                <DisplayModeSelectorComponent active="view" documentId={documentId}/>
+            <div style={{overflowY: "scroll", height: "100%"}}>
                 <div className="row">
                     <div className="small-12">
                         <div className="panel">

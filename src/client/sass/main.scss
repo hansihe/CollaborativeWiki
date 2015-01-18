@@ -88,7 +88,7 @@ html, body, #root {
 .display-mode-selector {
   position: fixed;
   top: $topbar-height + 10px;
-  right: 10px;
+  right: 60px;
 
   padding: 0;
   margin: 0;
@@ -114,6 +114,64 @@ html, body, #root {
     &.active {
       background-color: #aaaaaa;
     }
+  }
+}
+
+.sidebar {
+  $sidebar-background: #eeeeee;
+  $sidebar-border: #dddddd;
+
+  $sidebar-width: 40px;
+
+  background-color: $sidebar-background;
+  border-left: solid 1px $sidebar-border;
+  flex: 0 0 ($sidebar-width + 1px);
+
+  .sidebar-button {
+    width: $sidebar-width;
+    height: $sidebar-width;
+
+    overflow: hidden;
+
+    cursor: pointer;
+    &:hover {
+      background-color: darken($sidebar-background, 5);
+    }
+  }
+}
+
+.flex-animation-container {
+  display: flex;
+  height: 100%;
+
+  transition: all 500ms linear;
+  .flex-animation-leave {
+    -webkit-animation: flexShrink 500ms ease forwards;
+    animation: flexShrink 500ms ease forwards;
+  }
+  .flex-animation-enter {
+    -webkit-animation: flexGrow 500ms ease forwards;
+    animation: flexGrow 500ms ease forwards;
+  }
+}
+@-webkit-keyframes flexShrink {
+  to {
+    flex: .00001;
+  }
+}
+@keyframes flexShrink {
+  to {
+    flex: .00001;
+  }
+}
+@keyframes flexGrow {
+  from {
+    flex: .00001;
+  }
+}
+@-webkit-keyframes flexGrow {
+  from {
+    flex: .00001;
   }
 }
 

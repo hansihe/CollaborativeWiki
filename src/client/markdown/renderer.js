@@ -2,7 +2,7 @@ var Remarkable = require('remarkable');
 
 var _ = require('../../shared/underscore');
 var React = require('react');
-var DocumentRendererComponent = require('../react_components/HTMLDisplayComponent');
+var DocumentRendererComponent = require('../react_components/ComponentHTMLDisplay');
 
 // TODO: Emit line numbers
 
@@ -24,7 +24,7 @@ remarkable.core.ruler.enable([
  * Presumes that a closing token follows.
  * This is used for simple tags without any additional required logic. (like divs, table, ul)
  * @param tagName
- * @param tokenName optional, defaults to tagName
+ * @param [tokenName] optional, defaults to tagName
  * @returns {Function}
  */
 function basicContainerTag(tagName, tokenName) {

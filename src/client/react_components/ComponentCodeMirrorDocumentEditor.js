@@ -10,6 +10,7 @@ require('codemirror/mode/markdown/markdown');
 
 
 var CodeMirrorDocumentEditor = React.createClass({
+    mixins: [React.PureRenderMixin],
     propTypes: {
         style: React.PropTypes.object,
         className: React.PropTypes.string,
@@ -24,6 +25,7 @@ var CodeMirrorDocumentEditor = React.createClass({
     },
 
     componentDidMount: function() {
+        console.log("Codemirror init");
         this.editor = CodeMirror(this.refs.container.getDOMNode(), this.props);
         this.setDocument(this.props.documentId);
     },
