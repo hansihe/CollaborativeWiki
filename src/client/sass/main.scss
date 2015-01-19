@@ -117,10 +117,10 @@ html, body, #root {
   }
 }
 
-.sidebar {
-  $sidebar-background: #eeeeee;
-  $sidebar-border: #dddddd;
+$sidebar-background: #eeeeee;
+$sidebar-border: #dddddd;
 
+.sidebar {
   $sidebar-width: 40px;
 
   background-color: $sidebar-background;
@@ -140,9 +140,19 @@ html, body, #root {
   }
 }
 
+.users-sidebar {
+  .sidebar-title {
+    padding: 6px;
+
+    background-color: darken($sidebar-background, 6);
+    margin-bottom: solid 1px darken($sidebar-background, 6);
+  }
+}
+
 .flex-animation-container {
   display: flex;
   height: 100%;
+  overflow: hidden;
 
   transition: all 500ms linear;
   .flex-animation-leave {

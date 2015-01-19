@@ -1,9 +1,9 @@
-var react = require('react');
+var React = require('react');
 
 var TopBarComponent = require('./ComponentTopBar');
 var RouteHandler = require('react-router').RouteHandler;
 
-var AppComponent = react.createClass({
+var AppComponent = React.createClass({
     statics: {
         willTransitionFrom: function() {
             //alert('transition');

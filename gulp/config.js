@@ -3,6 +3,7 @@ var wwwDest = dest + "/www";
 var src = "./src";
 
 var reactify = require('reactify');
+var to5ify = require("6to5ify");
 
 module.exports = {
     server: {
@@ -20,7 +21,7 @@ module.exports = {
     browserify: {
         src: src + "/client/main.js",
         dest: wwwDest,
-        transform: [reactify],
+        transform: [reactify, to5ify],
         debug: true
     },
     markup: {

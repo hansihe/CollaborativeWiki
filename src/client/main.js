@@ -1,6 +1,5 @@
 // Imports
-var react = require('react');
-React = react;
+var React = require('react');
 var shoe = require('shoe');
 var _ = require('../shared/underscore');
 
@@ -41,9 +40,11 @@ var routes = (
     </Route>
 );
 
+var routeStateStore = require('./state/stores/RouteState');
+
 window.onload = function() {
     ReactRouter.run(routes, ReactRouter.HistoryLocation, function(Handler, state) {
-        console.log(state);
+        routeStateStore.actions.updateRouteState(state);
         React.render((<Handler/>), document.body);
     });
 };

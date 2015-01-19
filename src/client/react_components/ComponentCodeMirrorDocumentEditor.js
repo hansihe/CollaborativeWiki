@@ -50,7 +50,7 @@ var CodeMirrorDocumentEditor = React.createClass({
         if (this.document) {
             this.editorDocumentAdapter.detach();
             this.editor.setValue('');
-            this.document.removeListener('applyOperation', this.onApplyOperation);
+            this.document.serverOperationEvent.off(this.onApplyOperation);
             services.stateManager.documentClientManager.destroyClient(this, this.document);
         }
 
@@ -99,7 +99,7 @@ var CodeMirrorDocumentEditor = React.createClass({
             }
         });
 
-        this.document.on('applyOperation', this.onApplyOperation);
+        this.document.serverOperationEvent.on(this.onApplyOperation);
 
         //documentClient.on('selection', function(selection) {
         //    codeMirrorExtension.setCursorPos(selection.ranges[0].anchor)

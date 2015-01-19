@@ -25,13 +25,13 @@ var DocumentRenderer = React.createClass({
         }
 
         if (this.document) {
-            this.document.removeListener('documentChange', this.onDocumentChange);
+            this.document.documentChangeEvent.off(this.onDocumentChange);
             services.stateManager.documentClientManager.destroyClient(this, this.document);
         }
 
         this.document = services.stateManager.documentClientManager.requestClient(this, documentId);
         this.cancelStateCallback = this.document.getInitialState(function() {
-            componentThis.document.on('documentChange', componentThis.onDocumentChange);
+            componentThis.document.documentChangeEvent.on(componentThis.onDocumentChange);
             componentThis.setMarkdown(componentThis.document.text);
         });
     },

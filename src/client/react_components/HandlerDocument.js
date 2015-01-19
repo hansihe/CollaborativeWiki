@@ -6,11 +6,12 @@ var _ = require('../../shared/underscore');
 
 var DisplayModeSelectorComponent = require('./ComponentDisplayModeSelector');
 var SideBarComponent = require('./ComponentSideBar');
+var UserBarComponent = require('./ComponentUsersSideBar');
 
 var services = require('../state/serviceManager');
 
 var Reflux = require('reflux');
-var UIStateStore = require('../state/UIStateStore');
+var UIStateStore = require('../state/stores/UIState');
 
 var DocumentEditComponent = React.createClass({
     mixins: [ReactRouter.State, Reflux.ListenerMixin],
@@ -22,7 +23,7 @@ var DocumentEditComponent = React.createClass({
 
     render: function() {
         var documentId = this.getParams().documentId || 'index';
-        var test = this.state.uiState.usersSidebarOpen ? (<div key="usersBar" style={{flex: "0 0 200px", height: "100%"}}></div>) : undefined;
+        var test = this.state.uiState.usersSidebarOpen ? (<div key="usersBar" style={{flex: "0 0 200px", height: "100%", width: "200px"}}><UserBarComponent/></div>) : undefined;
         return (
             <ReactCSSTransitionGroup
                 component="div"
@@ -38,7 +39,6 @@ var DocumentEditComponent = React.createClass({
                     key="sidebar"
                     editing={true}
                     test={this.test}/>
-                <DisplayModeSelectorComponent key="selector" active="edit" documentId={documentId}/>
             </ReactCSSTransitionGroup>
         );
     },

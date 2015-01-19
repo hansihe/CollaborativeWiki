@@ -1,7 +1,7 @@
 var React = require('react');
 var ReactRouter = require('react-router');
 
-var UIStateStore = require('../state/UIStateStore');
+var UIStateStore = require('../state/stores/UIState');
 
 var SideBarButtonComponent = React.createClass({
     render: function() {

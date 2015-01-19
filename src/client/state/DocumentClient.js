@@ -2,6 +2,7 @@ var ot = require('ot');
 var _ = require('../../shared/underscore');
 var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
+var EventEndpoint = require('../../shared/EventEndpoint');
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -23,6 +24,14 @@ function DocumentClient(stateManager, documentClientManager, id) {
 
     this.stateManager = stateManager;
     this.manager = documentClientManager;
+
+    // Fired when there is a change in the document on the client side (unconfirmed)
+    this.clientOperationEvent = new EventEndpoint(this, 'clientDocumentChange');
+    // Fired when there is a change in the document from the server (confirmed)
+    this.serverOperationEvent = new EventEndpoint(this, 'serverDocumentChange');
+
+    // Fired when there is any change at all in the document data
+    this.documentChangeEvent = new EventEndpoint(this, 'documentChange');
 }
 _.extend(DocumentClient.prototype, EventEmitter.prototype, ot.Client.prototype);
 
@@ -108,6 +117,7 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
 
     this.emit('remote');
     this.emit('documentReplace', document);
+    this.documentChangeEvent.emit();
     this.emit('initialState', this);
 };
 
@@ -116,7 +126,7 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
  */
 DocumentClient.prototype.sendOperation = function(revision, operation) {
     this.text = operation.apply(this.text);
-    this.emit('documentChange');
+    this.documentChangeEvent.emit();
 
     this.stateManager.networkChannel.rpcRemote.documentOperation(this.id, revision, operation);
 };
@@ -127,8 +137,9 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
  */
 DocumentClient.prototype.applyOperation = function(operation) {
     this.text = operation.apply(this.text);
-    this.emit('applyOperation', operation);
-    this.emit('documentChange');
+
+    this.serverOperationEvent.emit(operation);
+    this.documentChangeEvent.emit();
 };
 
 /**
