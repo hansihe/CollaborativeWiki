@@ -20,28 +20,24 @@ function rewireEvent(source, type, destination, destinationType) {
  * @constructor
  */
 function ClientState() {
-    var ClientStateThis = this;
+    var clientStateThis = this;
 
     this.userId = undefined;
 
     EventEmitter.call(this);
 
+    this.documentClientManager = new DocumentClientManager(this);
+
     this.sock = shoe('/endpoint');
     this.networkChannel = new NetworkChannel(this.sock, {
         // RPC
-        documentOperation: function(documentId, senderUUID, revision, operation) {
-            var operationObj = ot.TextOperation.fromJSON(operation);
-            ClientStateThis.emit('documentOperation', documentId, senderUUID, revision, operationObj);
-        },
-        documentSelection: function(documentId, userUUID, selection) {
-            ClientStateThis.emit('documentSelection', documentId, userUUID, selection);
+        documentMessage: function(message) {
+            clientStateThis.documentClientManager.incomingServerDocumentMessage(message);
         }
     });
 
     rewireEvent(this.networkChannel, 'connected', this, 'networkConnected');
     rewireEvent(this.networkChannel, 'disconnected', this, 'networkDisconnected');
-
-    this.documentClientManager = new DocumentClientManager(this);
 
     this.on('networkConnected', thisify(this._onNetworkConnected, this));
     this.on('networkReady', thisify(this._onNetworkReady, this));

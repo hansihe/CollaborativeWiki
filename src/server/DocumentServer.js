@@ -2,6 +2,7 @@ var EventEmitter = require('events').EventEmitter;
 var _ = require('./../shared/underscore');
 var services = require('./serviceManager');
 var ot = require('ot');
+var EventEndpoint = require('../shared/EventEndpoint');
 
 var USER_DOCUMENT_TIMEOUT_DELAY = 10; // seconds
 
@@ -14,6 +15,7 @@ function OTServer(name) {
     this.propertyNames = _.reduce(
         {
             document: 'documentText',
+            documentStream: 'documentStream',
             operations: 'operations',
             lock: 'operationsLock',
 
@@ -33,12 +35,10 @@ function OTServer(name) {
 
     this.localClients = [];
 
-    services.redisClient.subscribe(this.propertyNames.operationStream, this.onGlobalOperation.bind(this));
-    services.redisClient.subscribe(this.propertyNames.selectionStream, this.onGlobalSelection.bind(this));
-    services.redisClient.subscribe(this.propertyNames.userStream, this.onGlobalUserEvent.bind(this));
+    this.documentEvent = new EventEndpoint.RedisEndpoint(services.redisClient, this.propertyNames.documentStream);
 
     setInterval(function() {
-        console.log(otServerThis.localClients);
+        //console.log(otServerThis.localClients);
         for (var i = 0; i < otServerThis.localClients.length; i++) {
             otServerThis.userEditingVisit(otServerThis.localClients[i]);
         }
@@ -46,6 +46,39 @@ function OTServer(name) {
     }, 5000);
 }
 _.extend(OTServer.prototype, EventEmitter.prototype);
+
+OTServer.prototype.incomingUserDocumentMessage = function(message) {
+    var documentServerThis = this;
+
+    switch (message.type) {
+        // TODO: Validate schema for messages.
+        /* Standard fields:
+        {
+            'type': "Message type",
+            'sender': "Unique user id"
+        }
+         */
+        case 'operation': {
+            /*
+            {
+                'operation': "The operation the user wants to apply to the document.",
+                'revision': "The document revision the operation applies to."
+            }
+             */
+            documentServerThis.processLocalUserOperation(message);
+            break;
+        }
+        case 'selection': {
+            /*
+            {
+                'selection': "Updated user selection."
+            }
+             */
+            documentServerThis.processLocalUserSelection(message);
+            break;
+        }
+    }
+};
 
 OTServer.prototype.processLocalUserOperation = function (data) {
     var otThis = this;
@@ -92,7 +125,8 @@ OTServer.prototype.processLocalUserOperation = function (data) {
             var message = data || {};
             message['operation'] = operation.toJSON();
             message['revision'] = operationsLength + 1;
-            multiWrite.publish(otThis.propertyNames.operationStream, JSON.stringify(message));
+            //multiWrite.publish(otThis.propertyNames.operationStream, JSON.stringify(message));
+            otThis.documentEvent.transaction(multiWrite).emit(message);
 
             // Write results back to db
             multiWrite.exec(function(err, results) {
@@ -197,21 +231,12 @@ OTServer.prototype.processLocalUserSelection = function(data) {
     var multiWrite = services.redisClient.redisConnection.multi();
 
     var message = data || {};
-    multiWrite.publish(otThis.propertyNames.selectionStream, JSON.stringify(message));
+    otThis.documentEvent.transaction(multiWrite).emit(message);
+    //multiWrite.publish(otThis.propertyNames.selectionStream, JSON.stringify(message));
 
     multiWrite.exec(function(err, results) {
         console.log("Published selection.");
     });
-};
-
-OTServer.prototype.onGlobalOperation = function(data) {
-    this.emit("operation", data.id, data.revision, data.senderUUID, data.operation);
-};
-OTServer.prototype.onGlobalSelection = function(data) {
-    this.emit("selection", data.id, data.senderUUID, data.selection);
-};
-OTServer.prototype.onGlobalUserEvent = function(data) {
-    console.log(data);
 };
 
 OTServer.prototype.lock = function(task) {

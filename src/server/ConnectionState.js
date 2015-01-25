@@ -15,8 +15,7 @@ function ConnectionState(stream) {
 
     this.joinedDocuments = [];
 
-    clientConnectionThis.boundDocumentOperationTransmitter = clientConnectionThis._transmitDocumentOperation.bind(clientConnectionThis);
-    clientConnectionThis.boundDocumentSelectionTransmitter = clientConnectionThis._transmitDocumentCursor.bind(clientConnectionThis);
+    clientConnectionThis.boundDocumentEventTransmitter = clientConnectionThis._documentEventTransmitter.bind(clientConnectionThis);
 
     this.channel = new NetworkChannel(stream, {
         handshake: function(callback) {
@@ -30,8 +29,7 @@ function ConnectionState(stream) {
                 // TODO: Handle error case
             }
 
-            document.on("operation", clientConnectionThis.boundDocumentOperationTransmitter);
-            document.on("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
+            document.documentEvent.on(clientConnectionThis.boundDocumentEventTransmitter);
 
             var multi = services.redisClient.redisConnection.multi();
 
@@ -57,30 +55,18 @@ function ConnectionState(stream) {
                 throw "Can't leave unjoined document.";
             }
 
-            document.removeListener("operation", clientConnectionThis.boundDocumentOperationTransmitter);
-            document.removeListener("selection", clientConnectionThis.boundDocumentSelectionTransmitter);
+            document.documentEvent.off(clientConnectionThis.boundDocumentEventTransmitter);
 
             _.remove(clientConnectionThis.joinedDocuments, function(value) {
                 return value === document;
             });
             document.localUserLeave(clientConnectionThis.uuid);
         },
-        documentOperation: function(documentId, revision, operation) {
+        documentMessage: function(message) {
+            var documentId = message.id;
             var document = documentServerManager.getDocumentServer(documentId);
-            document.processLocalUserOperation({
-                id: documentId,
-                revision: revision,
-                senderUUID: clientConnectionThis.uuid,
-                operation: operation
-            });
-        },
-        documentSelection: function(documentId, selection) {
-            var document = documentServerManager.getDocumentServer(documentId);
-            document.processLocalUserSelection({
-                id: documentId,
-                senderUUID: clientConnectionThis.uuid,
-                selection: selection
-            });
+            message['sender'] = clientConnectionThis.uuid;
+            document.incomingUserDocumentMessage(message);
         }
     });
 
@@ -91,6 +77,7 @@ function ConnectionState(stream) {
     });
 
     this.channel.on('end', function() {
+        console.log("disconnect");
         for (var i = 0; i < clientConnectionThis.joinedDocuments; i++) {
             var document = clientConnectionThis.joinedDocuments[i];
             document.localUserLeave(clientConnectionThis.uuid);
@@ -100,12 +87,8 @@ function ConnectionState(stream) {
 }
 _.extend(ConnectionState.prototype, EventEmitter.prototype);
 
-ConnectionState.prototype._transmitDocumentOperation = function(id, revision, userID, operation) {
-    this.channel.rpcRemote.documentOperation(id, userID, revision, operation);
-};
-
-ConnectionState.prototype._transmitDocumentCursor = function(id, userID, selection) {
-    this.channel.rpcRemote.documentSelection(id, userID, selection);
+ConnectionState.prototype._documentEventTransmitter = function(message) {
+    this.channel.rpcRemote.documentMessage(message);
 };
 
 module.exports = ConnectionState;

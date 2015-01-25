@@ -2,7 +2,7 @@ var ot = require('ot');
 var _ = require('../../shared/underscore');
 var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
-var EventEndpoint = require('../../shared/EventEndpoint');
+var EventEndpoint = require('../../shared/EventEndpoint').Endpoint;
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -32,8 +32,38 @@ function DocumentClient(stateManager, documentClientManager, id) {
 
     // Fired when there is any change at all in the document data
     this.documentChangeEvent = new EventEndpoint(this, 'documentChange');
+
+    this.outMessage = new EventEndpoint(this, 'outMessage');
+    this.inMessage = new EventEndpoint(this, 'inMessage');
+
+    this.outMessage.on(this.handleOutMessage.bind(this));
+    this.inMessage.on(this.handleInMessage.bind(this));
 }
 _.extend(DocumentClient.prototype, EventEmitter.prototype, ot.Client.prototype);
+
+DocumentClient.prototype.handleInMessage = function(message) {
+    var type = message.type;
+    switch (type) {
+        case 'operation': {
+            var operation = ot.TextOperation.fromJSON(message.operation);
+            if (message.sender == this.stateManager.userId) {
+                this.serverAck(operation);
+            } else {
+                this.applyServer(operation);
+            }
+            break;
+        }
+        case 'selection': {
+            break;
+        }
+    }
+};
+
+DocumentClient.prototype.handleOutMessage = function(message) {
+    message.id = this.id;
+    this.stateManager.networkChannel.rpcRemote.documentMessage(message);
+    console.log(message);
+};
 
 /**
  * Registers a callback for when the document receives initial state from the server.
@@ -76,7 +106,10 @@ DocumentClient.prototype.performClientOperation = function(operation) {
  * Transmits the new state to the server.
  */
 DocumentClient.prototype.performSelection = function(selection) {
-    this.stateManager.networkChannel.rpcRemote.documentSelection(this.id, selection);
+    this.outMessage.emit({
+        'type': 'selection',
+        'selection': selection
+    });
 };
 
 DocumentClient.prototype.isConnected = function() {
@@ -128,7 +161,11 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
     this.text = operation.apply(this.text);
     this.documentChangeEvent.emit();
 
-    this.stateManager.networkChannel.rpcRemote.documentOperation(this.id, revision, operation);
+    this.outMessage.emit({
+        'type': 'operation',
+        'operation': operation,
+        'revision': revision
+    });
 };
 
 /**
@@ -140,21 +177,6 @@ DocumentClient.prototype.applyOperation = function(operation) {
 
     this.serverOperationEvent.emit(operation);
     this.documentChangeEvent.emit();
-};
-
-/**
- * Called by the DocumentClientManager when a operation is received from the server.
- */
-DocumentClient.prototype.incomingServerOperation = function(ack, revision, operation) {
-    if (ack) {
-        this.serverAck(operation);
-    } else {
-        this.applyServer(operation);
-    }
-};
-
-DocumentClient.prototype.incomingServerSelection = function(data) {
-    //this.emit('selection', data);
 };
 
 module.exports = DocumentClient;

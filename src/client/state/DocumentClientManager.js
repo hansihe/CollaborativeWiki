@@ -19,9 +19,6 @@ function DocumentClientManager(stateManager) {
 
     this.stateManager.on('networkReady', thisify(this._networkConnected, this));
     this.stateManager.on('networkDisconnected', thisify(this._networkDisconnected, this));
-
-    this.stateManager.on('documentOperation', this._receiveDocumentOperation.bind(this));
-    this.stateManager.on('documentSelection', this._receiveDocumentSelection.bind(this));
 }
 
 function getClient(manager, documentId) {
@@ -32,14 +29,10 @@ function getClient(manager, documentId) {
     return client;
 }
 
-DocumentClientManager.prototype._receiveDocumentOperation = function(documentId, userID, revision, operation) {
+DocumentClientManager.prototype.incomingServerDocumentMessage = function(message) {
+    var documentId = message.id;
     var client = getClient(this, documentId);
-    client.incomingServerOperation(userID == this.stateManager.userId, revision, operation);
-};
-
-DocumentClientManager.prototype._receiveDocumentSelection = function(documentId, userID, selection) {
-    var client = getClient(this, documentId);
-    //client.incomingServerSelection();
+    client.inMessage.emit(message);
 };
 
 /**
