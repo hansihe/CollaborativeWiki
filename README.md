@@ -13,7 +13,7 @@ Please note that this is not safe at all for use on open networks. The server do
 * [x] Proper editor (codemirror)
 * [x] Realtime markdown preview utilizing react.js diffing
 * [ ] Cursor synchronization
-* [ ] Messages for when people join/leave documents
+* [x] Messages for when people join/leave documents
 * [x] Proper document lifecycle management on both client and server
 * [ ] Implement reconnect on disconnect
 * [ ] Stop trusting the damned client (verify inputs, fail gracefully)
