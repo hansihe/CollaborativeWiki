@@ -1,4 +1,6 @@
 var React = require('react');
+var DocumentUseMixin = require('./mixin/DocumentUseMixin');
+var _ = require('../../shared/underscore');
 
 var TitleComponent = React.createClass({
     render: function() {
@@ -9,12 +11,44 @@ var TitleComponent = React.createClass({
 });
 
 var UsersSideBar = React.createClass({
+    mixins: [DocumentUseMixin],
     render: function() {
+        var userEntries = _.map(this.state.users, function(user) {
+            return (<li key={user}>{user}</li>);
+        });
         return (
             <div className="users-sidebar">
                 <TitleComponent>Users</TitleComponent>
+                <ul>
+                    {userEntries}
+                </ul>
             </div>
         )
+    },
+
+    componentWillMount: function() {
+        this.setState({documentId: this.props.documentId});
+    },
+    componentWillReceiveProps: function(nextProps) {
+        this.setState({documentId: nextProps.documentId});
+    },
+
+    handleUsersChange: function() {
+        this.setState({
+            users: this.document.users
+        })
+    },
+
+    attachDocumentListeners: function() {
+        this.document.usersChangeEvent.on(this.handleUsersChange);
+    },
+    initialStateReceived: function() {
+        this.setState({
+            users: this.document.users
+        });
+    },
+    detachDocumentListeners: function() {
+        this.document.usersChangeEvent.off(this.handleUsersChange);
     }
 });
 

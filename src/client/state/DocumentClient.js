@@ -33,6 +33,8 @@ function DocumentClient(stateManager, documentClientManager, id) {
     // Fired when there is any change at all in the document data
     this.documentChangeEvent = new EventEndpoint(this, 'documentChange');
 
+    this.usersChangeEvent = new EventEndpoint(this, 'usersChange');
+
     this.outMessage = new EventEndpoint(this, 'outMessage');
     this.inMessage = new EventEndpoint(this, 'inMessage');
 
@@ -54,6 +56,16 @@ DocumentClient.prototype.handleInMessage = function(message) {
             break;
         }
         case 'selection': {
+            break;
+        }
+        case 'user_join': {
+            this.users = _.union(this.users, [message.user]);
+            this.usersChangeEvent.emit();
+            break;
+        }
+        case 'user_leave': {
+            _.remove(this.users, function(o) { return message.user == o; });
+            this.usersChangeEvent.emit();
             break;
         }
     }
@@ -139,12 +151,13 @@ DocumentClient.prototype.onConnected = function() {
  * Called by the server as a callback from the RPC performed in DocumentClient.onConnected.
  * Contains failure state/information needed for the DocumentClient to start.
  */
-DocumentClient.prototype.channelInitCallback = function(success, revision, document) {
+DocumentClient.prototype.channelInitCallback = function(success, revision, document, users) {
     console.log("DocumentClient init success: ", success, " Revision: ", revision);
 
     this.revision = revision;
     this.document = document;
     this.handshaken = true;
+    this.users = users;
 
     this.text = document;
 

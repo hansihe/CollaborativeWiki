@@ -1,6 +1,6 @@
-var react = require('react');
+var React = require('react');
 
-var LoginComponent = react.createClass({
+var LoginComponent = React.createClass({
     render: function() {
         return (
             <div className="row login-page">

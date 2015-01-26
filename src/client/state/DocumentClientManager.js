@@ -30,6 +30,7 @@ function getClient(manager, documentId) {
 }
 
 DocumentClientManager.prototype.incomingServerDocumentMessage = function(message) {
+    console.log(message);
     var documentId = message.id;
     var client = getClient(this, documentId);
     client.inMessage.emit(message);

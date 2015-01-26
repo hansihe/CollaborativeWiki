@@ -23,7 +23,7 @@ var DocumentEditComponent = React.createClass({
 
     render: function() {
         var documentId = this.getParams().documentId || 'index';
-        var test = this.state.uiState.usersSidebarOpen ? (<div key="usersBar" style={{flex: "0 0 200px", height: "100%", width: "200px"}}><UserBarComponent/></div>) : undefined;
+        var test = this.state.uiState.usersSidebarOpen ? (<div key="usersBar" style={{flex: "0 0 200px", height: "100%", width: "200px"}}><UserBarComponent documentId={documentId}/></div>) : undefined;
         return (
             <ReactCSSTransitionGroup
                 component="div"

@@ -20,11 +20,7 @@ function OTServer(name) {
             lock: 'operationsLock',
 
             editingUsers: 'editingUsers',
-            editingUsersLock: 'editingUsersLock',
-
-            operationStream: 'operationStream',
-            selectionStream: 'selectionStream',
-            userStream: 'userStream'
+            editingUsersLock: 'editingUsersLock'
         },
         function(result, value, key) {
             result[key] = otServerThis.name + "_" + value;
@@ -54,13 +50,13 @@ OTServer.prototype.incomingUserDocumentMessage = function(message) {
         // TODO: Validate schema for messages.
         /* Standard fields:
         {
-            'type': "Message type",
-            'sender': "Unique user id"
+            'type': "Message type"
         }
          */
         case 'operation': {
             /*
             {
+                'sender': "Unique user id",
                 'operation': "The operation the user wants to apply to the document.",
                 'revision': "The document revision the operation applies to."
             }
@@ -71,6 +67,7 @@ OTServer.prototype.incomingUserDocumentMessage = function(message) {
         case 'selection': {
             /*
             {
+                'sender': "Unique user id",
                 'selection': "Updated user selection."
             }
              */
@@ -174,10 +171,13 @@ OTServer.prototype.userEditingVisit = function(userID) {
         multi.exec(function (err, results) {
             var lastClientCheckin = results[0];
             if (!lastClientCheckin) {
-                services.redisClient.redisConnection.publish([otServerThis.propertyNames.userStream, JSON.stringify({
-                    'action': 'join',
-                    'userID': userID
-                })], function() {
+                var multi = services.redisClient.redisConnection.multi();
+                otServerThis.documentEvent.transaction(multi).emit({
+                    id: otServerThis.name,
+                    type: 'user_join',
+                    user: userID
+                });
+                multi.exec(function() {
                     releaseLock();
                 });
             }
@@ -199,10 +199,12 @@ OTServer.prototype.removeTimedoutEditingVisits = function() {
 
             var multi = services.redisClient.redisConnection.multi();
             for (var i = 0; i < usersTimedOut.length; i++) {
-                multi.publish(otServerThis.propertyNames.userStream, JSON.stringify({
-                    'action': 'leave',
-                    'userID': usersTimedOut[i]
-                }));
+                otServerThis.documentEvent.transaction(multi).emit({
+                    id: otServerThis.name,
+                    type: 'user_leave',
+                    user: usersTimedOut[i]
+                });
+
                 console.log("timeout", usersTimedOut[i]);
             }
             multi.exec(function(err, results) {
@@ -215,10 +217,13 @@ OTServer.prototype.endUserEditingVisit = function(userID) {
     var otServerThis = this;
     services.redisClient.lock(otServerThis.propertyNames.editingUsersLock, function(releaseLock) {
         services.redisClient.redisConnection.zrem([otServerThis.propertyNames.editingUsers, userID], function(err) {
-            services.redisClient.redisConnection.publish([otServerThis.propertyNames.userStream, JSON.stringify({
-                'action': 'leave',
-                'userID': userID
-            })], function() {
+            var multi = services.redisClient.redisConnection.multi();
+            otServerThis.documentEvent.transaction(multi).emit({
+                id: otServerThis.name,
+                type: 'user_leave',
+                user: userID
+            });
+            multi.exec(function() {
                 releaseLock();
             });
         });

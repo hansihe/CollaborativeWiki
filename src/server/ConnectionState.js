@@ -35,11 +35,12 @@ function ConnectionState(stream) {
 
             multi.get(document.propertyNames['document']);
             multi.llen(document.propertyNames['operations']);
+            multi.zrange(document.propertyNames['editingUsers'], 0, -1);
 
             multi.exec(function(err, results) {
                 if (document) {
                     var documentText = results[0] || "";
-                    callback(true, results[1], documentText);
+                    callback(true, results[1], documentText, results[2]);
                 } else {
                     callback(false);
                 }
