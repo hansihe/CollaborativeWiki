@@ -53,6 +53,7 @@ var CodeMirrorDocumentEditor = React.createClass({
 
         this.editorDocumentAdapter = new CodeMirrorAdapter(editor);
         this.editorDocumentSelectionManager = new CodeMirrorUserSelectionManager(editor);
+        this.editor.on('changes', this.editorDocumentSelectionManager.editorChange.bind(this.editorDocumentSelectionManager));
 
         this.editorDocumentAdapter.registerCallbacks({
             change: function(operation, inverse) {

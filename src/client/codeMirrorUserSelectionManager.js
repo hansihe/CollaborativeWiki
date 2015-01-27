@@ -1,45 +1,88 @@
+var UserCursorComponent = require('./react_components/UserCursorComponent');
+var CodeMirror = require('codemirror');
+var React = require('react');
+var _ = require('lodash');
+
 function CodeMirrorUserSelection(cm) {
     this.cm = cm;
 
-    var cmUSThis = this;
+    this.editorCursors = {};
+    this.userCursors = {};
 
-    //setTimeout(function() {
-    var pos = cm.getDoc().posFromIndex(2);
-    this.cursor = cmUSThis.makeCursor(2, pos);
-    cm.addWidget(pos, this.cursor);
-    //}, 2000);
+    //this.editorCursors['test'] = this.initWidgetComponent(<UserCursorComponent/>, 20);
+    //this.editorCursors['test'][2] = 20;
 
-
-    //console.log("yee");
+    this.setUserCursors({
+        wattest: {
+            index: 15
+        },
+        twst2: {
+            index: 10
+        }
+    });
 }
 
-CodeMirrorUserSelection.prototype.makeCursor = function() {
-    /*var cursorCoords = this.cm.cursorCoords(this.cm, pos, "div", null, null, !this.cm.options.singleCursorHeightPerLine);
-    var cursorHeight = Math.max(0, pos.bottom - pos.top) * this.cm.options.cursorHeight + "px";*/
-    var cursorHeight = 13 + "px";
+CodeMirrorUserSelection.prototype.setUserCursors = function(newUserCursors) {
+    var oldCursors = _.map(this.userCursors, function(value, key) {
+        return key;
+    });
+    var newCursors = _.map(newUserCursors, function(value, key) {
+        return key;
+    });
 
-    var cursorContainer = document.createElement("div");
-    cursorContainer.style.position = "absolute";
-    cursorContainer.style.height = 0;
-    cursorContainer.style.width = 0;
+    var removedCursors = _.difference(oldCursors, newCursors);
+    for (var i = 0; i < removedCursors.length; i++) {
+        this.removeWidget(removedCursors[i]);
+    }
 
-    var cursorDisplay = document.createElement("div");
-    cursorDisplay.style.position = "absolute";
-    cursorDisplay.style.left = 0;
-    cursorDisplay.style.bottom = 0;
-    cursorDisplay.style.height = cursorHeight;
-    cursorDisplay.style.width = 0;
-    cursorDisplay.style.borderLeft = "solid 1px green";
-    cursorDisplay.style.borderRight = "solid 1px green";
+    this.userCursors = newUserCursors;
 
-    cursorContainer.appendChild(cursorDisplay);
-
-    return cursorContainer;
+    this.editorChange();
 };
 
-CodeMirrorUserSelection.prototype.setCursorPos = function(pos) {
-    this.cursor.parentElement.removeChild(this.cursor);
-    this.cm.addWidget(this.cm.getDoc().posFromIndex(pos), this.cursor);
+CodeMirrorUserSelection.prototype.editorChange = function() {
+    var userSelectionThis = this;
+    console.log(this.editorCursors, this.userCursors);
+    _.forEach(this.userCursors, function(value, key) {
+        userSelectionThis.ensureUserCursor(key, value.index);
+    });
+};
+
+CodeMirrorUserSelection.prototype.ensureUserCursor = function(user, index) {
+    if (this.editorCursors[user] === undefined) {
+        this.editorCursors[user] = this.initWidgetComponent(<UserCursorComponent user={user}/>, index);
+    } else {
+        this.setWidgetIndex(this.editorCursors[user][0], index);
+    }
+};
+
+CodeMirrorUserSelection.prototype.initWidgetComponent = function(component, index) {
+    var container = document.createElement('div');
+    container.style.position = 'absolute';
+    this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
+    //this.cm.display.sizer.appendChild(container);
+    this.cursor = container;
+
+    var rendered = React.render(component, container);
+
+    if (index) {
+        this.setWidgetIndex(container, index);
+    }
+
+    return [container, rendered];
+};
+
+CodeMirrorUserSelection.prototype.setWidgetIndex = function(element, index) {
+    var pos = this.cm.cursorCoords(this.cm.clipPos(this.cm.getDoc().posFromIndex(index)), 'local');
+    var cursor = this.cursor;
+    cursor.style.top = pos.bottom + 'px';
+    cursor.style.left = pos.left + 'px';
+};
+
+CodeMirrorUserSelection.prototype.removeWidget = function(id) {
+    var element = this.editorCursors[id][0];
+    element.parentNode.removeChild(element);
+    delete this.editorCursors[id];
 };
 
 module.exports = CodeMirrorUserSelection;
