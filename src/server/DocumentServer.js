@@ -109,8 +109,10 @@ OTServer.prototype.processLocalUserOperation = function (data) {
 
             // ... and transform the operation against all these operations ...
             var transform = ot.TextOperation.transform;
+            console.log(operation, concurrentOperations);
             for (var i = 0; i < concurrentOperations.length; i++) {
-                operation = transform(operation, concurrentOperations[i])[0];
+                operation = transform(ot.TextOperation.fromJSON(JSON.parse(concurrentOperations[i])), operation)[1];
+                console.log(operation);
             }
 
             // ... and apply that on the document.
@@ -120,7 +122,7 @@ OTServer.prototype.processLocalUserOperation = function (data) {
 
             var multiWrite = services.redisClient.redisConnection.multi();
             multiWrite.set(otThis.propertyNames.document, document);
-            multiWrite.rpush(otThis.propertyNames.operations, operation.toJSON());
+            multiWrite.rpush(otThis.propertyNames.operations, JSON.stringify(operation.toJSON()));
 
             var message = data || {};
             message['operation'] = operation.toJSON();
