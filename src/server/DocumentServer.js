@@ -15,12 +15,15 @@ function OTServer(name) {
     this.propertyNames = _.reduce(
         {
             document: 'documentText',
-            documentStream: 'documentStream',
             operations: 'operations',
             lock: 'operationsLock',
 
             editingUsers: 'editingUsers',
-            editingUsersLock: 'editingUsersLock'
+            editingUsersLock: 'editingUsersLock',
+
+            userCursors: 'userCursors',
+
+            documentStream: 'documentStream'
         },
         function(result, value, key) {
             result[key] = otServerThis.name + "_" + value;
@@ -235,9 +238,10 @@ OTServer.prototype.processLocalUserSelection = function(data) {
 
     var multiWrite = services.redisClient.redisConnection.multi();
 
-    var message = data || {};
-    otThis.documentEvent.transaction(multiWrite).emit(message);
-    //multiWrite.publish(otThis.propertyNames.selectionStream, JSON.stringify(message));
+    otThis.documentEvent.transaction(multiWrite).emit(data);
+    multiWrite.hset(this.propertyNames.userCursors, data.sender, JSON.stringify({
+        selection: data.selection
+    }));
 
     multiWrite.exec(function(err, results) {
         console.log("Published selection.");
