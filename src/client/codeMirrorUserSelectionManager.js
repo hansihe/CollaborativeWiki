@@ -15,21 +15,32 @@ var CursorRootComponent = React.createClass({
     },
     render: function() {
         var componentThis = this;
-        var cursors = _.map(this.state.users, function(value, key) {
-            if (value.selections.length == 0) {
-                return
-            }
-            var cursorPos = componentThis.calculateCursorPosition(value.selections[0].head);
-            return <div key={key}
-                style={{
-                    position: 'absolute',
-                    top: cursorPos.bottom,
-                    left: cursorPos.left
-                }}>
-                <UserCursorComponent name={key}/>
-            </div>;
+
+        // Each user has a div with all their cursors in. This makes one container for each user.
+        var userCursorContainers = _.map(this.state.users, function(value, userName) {
+            // In each user's cursor container, there may be multiple cursors. They are keyed by their position in the
+            // array.
+            var userCursors = _.map(value.selections, function(value, cursorNum) {
+                var cursorPos = componentThis.calculateCursorPosition(value.head);
+                return (
+                    <div
+                        key={cursorNum}
+                        style={{
+                            position: 'absolute',
+                            top: cursorPos.bottom,
+                            left: cursorPos.left
+                        }}>
+                        <UserCursorComponent name={userName}/>
+                    </div>
+                );
+            });
+            return (
+                <div key={userName}>
+                    {userCursors}
+                </div>
+            );
         });
-        return <div>{cursors}</div>
+        return <div>{userCursorContainers}</div>
     },
     editorChange: function() {
         this.forceUpdate();
@@ -39,10 +50,14 @@ var CursorRootComponent = React.createClass({
 function CodeMirrorUserSelection(cm) {
     this.cm = cm;
 
+    this.selectionState = {};
+
     var container = document.createElement('div');
     container.style.position = 'absolute';
     this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
     this.component = React.render(<CursorRootComponent editor={this.cm}/>, container);
+
+
 }
 
 CodeMirrorUserSelection.prototype.setUserCursors = function(userCursors) {
