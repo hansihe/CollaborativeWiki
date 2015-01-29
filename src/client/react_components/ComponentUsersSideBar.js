@@ -13,8 +13,8 @@ var TitleComponent = React.createClass({
 var UsersSideBar = React.createClass({
     mixins: [DocumentUseMixin],
     render: function() {
-        var userEntries = _.map(this.state.users, function(user) {
-            return (<li key={user}>{user}</li>);
+        var userEntries = _.map(this.state.users, function(data, name) {
+            return (<li key={name}>{name}</li>);
         });
         return (
             <div className="users-sidebar">

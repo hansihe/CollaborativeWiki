@@ -185,4 +185,19 @@ $sidebar-border: #dddddd;
   }
 }
 
+.other-user-cursor {
+  z-index: 10;
+  cursor: text;
+  color: #ffffff;
+  font-family: sans-serif;
+
+  .cursor-name {
+    z-index: 11;
+    visibility: hidden;
+  }
+  &:hover > .cursor-name {
+    visibility: visible;
+  }
+}
+
 @import "codemirror";

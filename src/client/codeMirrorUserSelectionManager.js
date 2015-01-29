@@ -16,14 +16,17 @@ var CursorRootComponent = React.createClass({
     render: function() {
         var componentThis = this;
         var cursors = _.map(this.state.users, function(value, key) {
-            var cursorPos = componentThis.calculateCursorPosition(value.index);
-            return <div
+            if (value.selections.length == 0) {
+                return
+            }
+            var cursorPos = componentThis.calculateCursorPosition(value.selections[0].head);
+            return <div key={key}
                 style={{
                     position: 'absolute',
                     top: cursorPos.bottom,
                     left: cursorPos.left
                 }}>
-                <UserCursorComponent name={key} key={key}/>
+                <UserCursorComponent name={key}/>
             </div>;
         });
         return <div>{cursors}</div>
@@ -40,15 +43,6 @@ function CodeMirrorUserSelection(cm) {
     container.style.position = 'absolute';
     this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
     this.component = React.render(<CursorRootComponent editor={this.cm}/>, container);
-
-    this.setUserCursors({
-        test1: {
-            index: 5
-        },
-        tesdsafasdf: {
-            index: 29
-        }
-    });
 }
 
 CodeMirrorUserSelection.prototype.setUserCursors = function(userCursors) {

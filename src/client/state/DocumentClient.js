@@ -18,9 +18,10 @@ function DocumentClient(stateManager, documentClientManager, id) {
     ot.Client.call(this);
     this.handshaken = false;
 
-    this.text = null;
-
     this.id = id;
+
+    this.text = null;
+    this.users = {};
 
     this.stateManager = stateManager;
     this.manager = documentClientManager;
@@ -34,6 +35,7 @@ function DocumentClient(stateManager, documentClientManager, id) {
     this.documentChangeEvent = new EventEndpoint(this, 'documentChange');
 
     this.usersChangeEvent = new EventEndpoint(this, 'usersChange');
+    this.selectionsChangeEvent = new EventEndpoint(this, 'selectionsChange');
 
     this.outMessage = new EventEndpoint(this, 'outMessage');
     this.inMessage = new EventEndpoint(this, 'inMessage');
@@ -56,15 +58,22 @@ DocumentClient.prototype.handleInMessage = function(message) {
             break;
         }
         case 'selection': {
+            console.log(message);
+            this.users[message.sender] = {
+                selections: message.selections
+            };
+            this.selectionsChangeEvent.emit();
             break;
         }
         case 'user_join': {
-            this.users = _.union(this.users, [message.user]);
+            this.users[message.user] = {
+                selections: []
+            };
             this.usersChangeEvent.emit();
             break;
         }
         case 'user_leave': {
-            _.remove(this.users, function(o) { return message.user == o; });
+            delete this.users[message.user];
             this.usersChangeEvent.emit();
             break;
         }
@@ -74,7 +83,6 @@ DocumentClient.prototype.handleInMessage = function(message) {
 DocumentClient.prototype.handleOutMessage = function(message) {
     message.id = this.id;
     this.stateManager.networkChannel.rpcRemote.documentMessage(message);
-    console.log(message);
 };
 
 /**
@@ -120,7 +128,7 @@ DocumentClient.prototype.performClientOperation = function(operation) {
 DocumentClient.prototype.performSelection = function(selection) {
     this.outMessage.emit({
         'type': 'selection',
-        'selection': selection
+        'selections': selection
     });
 };
 
@@ -157,7 +165,12 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
     this.revision = revision;
     this.document = document;
     this.handshaken = true;
-    this.users = users;
+    this.users = _.reduce(users, function(result, user) {
+        result[user] = {
+            selections: []
+        };
+        return result;
+    }, {});
 
     this.text = document;
 

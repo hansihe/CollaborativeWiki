@@ -71,7 +71,7 @@ OTServer.prototype.incomingUserDocumentMessage = function(message) {
             /*
             {
                 'sender': "Unique user id",
-                'selection': "Updated user selection."
+                'selections': "Updated user selection."
             }
              */
             documentServerThis.processLocalUserSelection(message);
@@ -242,7 +242,7 @@ OTServer.prototype.processLocalUserSelection = function(data) {
 
     otThis.documentEvent.transaction(multiWrite).emit(data);
     multiWrite.hset(this.propertyNames.userCursors, data.sender, JSON.stringify({
-        selection: data.selection
+        selection: data.selections
     }));
 
     multiWrite.exec(function(err, results) {

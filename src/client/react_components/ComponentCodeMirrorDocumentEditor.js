@@ -60,45 +60,29 @@ var CodeMirrorDocumentEditor = React.createClass({
                 documentClient.performClientOperation(operation);
             },
             selectionChange: function() {
-                var otRanges = [];
+                var otSelections = [];
                 _.forEach(editor.getDoc().listSelections(), function(value) {
-                    otRanges.push({
+                    otSelections.push({
                         anchor: editor.indexFromPos(value.anchor),
                         head: editor.indexFromPos(value.head)
                     });
                 });
-                var otSelection = {'ranges': otRanges};
 
-                documentClient.performSelection(otSelection);
+                documentClient.performSelection(otSelections);
             }
         });
     },
+
     onApplyOperation: function(operation) {
-        var documentClient = this.document;
-        var editor = this.editor;
-
         this.editorDocumentAdapter.applyOperation(operation);
-        this.editorDocumentAdapter.registerCallbacks({
-            change: function(operation, inverse) {
-                documentClient.performClientOperation(operation);
-            },
-            selectionChange: function() {
-                var otRanges = [];
-                _.forEach(editor.getDoc().listSelections(), function(value) {
-                    otRanges.push({
-                        anchor: editor.indexFromPos(value.anchor),
-                        head: editor.indexFromPos(value.head)
-                    });
-                });
-                var otSelection = {'ranges': otRanges};
-
-                documentClient.performSelection(otSelection);
-            }
-        });
+    },
+    onSelectionsChange: function() {
+        this.editorDocumentSelectionManager.setUserCursors(this.document.users);
     },
 
     attachDocumentListeners: function() {
         this.document.serverOperationEvent.on(this.onApplyOperation);
+        this.document.selectionsChangeEvent.on(this.onSelectionsChange);
     },
     initialStateReceived: function() {
         this.setDocumentClientOnEditor(this.editor, this.document);
