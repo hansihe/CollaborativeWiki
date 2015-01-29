@@ -3,13 +3,14 @@ var React = require('react');
 var cursorHeight = 13;
 
 var UserCursorComponent = React.createClass({
-    onEnter: function() {
-        console.log("HOVER!");
+    onEnter: function(e) {
+        console.log("HOVER!", e);
     },
     render: function() {
         return (
             <div
                 key="cursorRoot"
+                className="other-user-cursor"
                 onMouseOver={this.onEnter}
                 style={{
                     position: 'absolute',
@@ -37,6 +38,17 @@ var UserCursorComponent = React.createClass({
                         height: '6px',
                         width: '6px'
                     }}/>
+                <div
+                    key="cursorName"
+                    className="cursor-name"
+                    style={{
+                        position: 'absolute',
+                        backgroundColor: 'green',
+                        bottom: (cursorHeight - 1) + 'px',
+                        left: '-2',
+                        padding: '2px',
+                        zIndex: 20
+                    }}>{this.props.name}</div>
             </div>
         );
     }

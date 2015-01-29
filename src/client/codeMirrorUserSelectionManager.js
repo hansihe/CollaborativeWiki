@@ -1,88 +1,64 @@
-var UserCursorComponent = require('./react_components/UserCursorComponent');
+var UserCursorComponent = require('./react_components/ComponentUserCursor');
 var CodeMirror = require('codemirror');
 var React = require('react');
 var _ = require('lodash');
 
+var CursorRootComponent = React.createClass({
+    getInitialState: function() {
+        return {
+            users: []
+        }
+    },
+    calculateCursorPosition: function(index) {
+        var cm = this.props.editor;
+        return cm.cursorCoords(cm.clipPos(cm.getDoc().posFromIndex(index)), 'local')
+    },
+    render: function() {
+        var componentThis = this;
+        var cursors = _.map(this.state.users, function(value, key) {
+            var cursorPos = componentThis.calculateCursorPosition(value.index);
+            return <div
+                style={{
+                    position: 'absolute',
+                    top: cursorPos.bottom,
+                    left: cursorPos.left
+                }}>
+                <UserCursorComponent name={key} key={key}/>
+            </div>;
+        });
+        return <div>{cursors}</div>
+    },
+    editorChange: function() {
+        this.forceUpdate();
+    }
+});
+
 function CodeMirrorUserSelection(cm) {
     this.cm = cm;
 
-    this.editorCursors = {};
-    this.userCursors = {};
-
-    //this.editorCursors['test'] = this.initWidgetComponent(<UserCursorComponent/>, 20);
-    //this.editorCursors['test'][2] = 20;
+    var container = document.createElement('div');
+    container.style.position = 'absolute';
+    this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
+    this.component = React.render(<CursorRootComponent editor={this.cm}/>, container);
 
     this.setUserCursors({
-        wattest: {
-            index: 15
+        test1: {
+            index: 5
         },
-        twst2: {
-            index: 10
+        tesdsafasdf: {
+            index: 29
         }
     });
 }
 
-CodeMirrorUserSelection.prototype.setUserCursors = function(newUserCursors) {
-    var oldCursors = _.map(this.userCursors, function(value, key) {
-        return key;
+CodeMirrorUserSelection.prototype.setUserCursors = function(userCursors) {
+    this.component.setState({
+        users: userCursors
     });
-    var newCursors = _.map(newUserCursors, function(value, key) {
-        return key;
-    });
-
-    var removedCursors = _.difference(oldCursors, newCursors);
-    for (var i = 0; i < removedCursors.length; i++) {
-        this.removeWidget(removedCursors[i]);
-    }
-
-    this.userCursors = newUserCursors;
-
-    this.editorChange();
 };
 
 CodeMirrorUserSelection.prototype.editorChange = function() {
-    var userSelectionThis = this;
-    console.log(this.editorCursors, this.userCursors);
-    _.forEach(this.userCursors, function(value, key) {
-        userSelectionThis.ensureUserCursor(key, value.index);
-    });
-};
-
-CodeMirrorUserSelection.prototype.ensureUserCursor = function(user, index) {
-    if (this.editorCursors[user] === undefined) {
-        this.editorCursors[user] = this.initWidgetComponent(<UserCursorComponent user={user}/>, index);
-    } else {
-        this.setWidgetIndex(this.editorCursors[user][0], index);
-    }
-};
-
-CodeMirrorUserSelection.prototype.initWidgetComponent = function(component, index) {
-    var container = document.createElement('div');
-    container.style.position = 'absolute';
-    this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
-    //this.cm.display.sizer.appendChild(container);
-    this.cursor = container;
-
-    var rendered = React.render(component, container);
-
-    if (index) {
-        this.setWidgetIndex(container, index);
-    }
-
-    return [container, rendered];
-};
-
-CodeMirrorUserSelection.prototype.setWidgetIndex = function(element, index) {
-    var pos = this.cm.cursorCoords(this.cm.clipPos(this.cm.getDoc().posFromIndex(index)), 'local');
-    var cursor = this.cursor;
-    cursor.style.top = pos.bottom + 'px';
-    cursor.style.left = pos.left + 'px';
-};
-
-CodeMirrorUserSelection.prototype.removeWidget = function(id) {
-    var element = this.editorCursors[id][0];
-    element.parentNode.removeChild(element);
-    delete this.editorCursors[id];
+    this.component.editorChange();
 };
 
 module.exports = CodeMirrorUserSelection;
