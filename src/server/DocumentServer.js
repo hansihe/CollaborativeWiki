@@ -109,10 +109,8 @@ OTServer.prototype.processLocalUserOperation = function (data) {
 
             // ... and transform the operation against all these operations ...
             var transform = ot.TextOperation.transform;
-            console.log(operation, concurrentOperations);
             for (var i = 0; i < concurrentOperations.length; i++) {
                 operation = transform(ot.TextOperation.fromJSON(JSON.parse(concurrentOperations[i])), operation)[1];
-                console.log(operation);
             }
 
             // ... and apply that on the document.
@@ -246,7 +244,7 @@ OTServer.prototype.processLocalUserSelection = function(data) {
     }));
 
     multiWrite.exec(function(err, results) {
-        console.log("Published selection.");
+        //console.log("Published selection.");
     });
 };
 
