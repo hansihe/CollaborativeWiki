@@ -2,9 +2,6 @@ var dest = "./build";
 var wwwDest = dest + "/www";
 var src = "./src";
 
-var reactify = require('reactify');
-var to5ify = require("6to5ify");
-
 module.exports = {
     server: {
         port: 8080,
@@ -18,11 +15,24 @@ module.exports = {
         src: src + "/client/sass/**.scss",
         dest: wwwDest
     },
-    browserify: {
-        src: src + "/client/main.js",
+    webpack: {
+        src: dest + "/js/main.js",
         dest: wwwDest,
-        transform: [reactify, to5ify],
-        debug: true
+        debug: true,
+        devtool: '#source-map',
+        plugins: [
+            //new webpack.optimize.UglifyJsPlugin()
+        ],
+        entry: {
+            main: './build/js/client/main.js'
+        },
+        output: {
+            filename: './main.js'
+        }
+    },
+    transform: {
+        src: src + "/**/*.js",
+        dest: dest + "/js"
     },
     markup: {
         src: src + "/client/html/*.html",
