@@ -19,6 +19,12 @@ remarkable.core.ruler.enable([
     'abbr'
 ]);
 
+var LineNumberComponent = React.createClass({
+    render: function() {
+        return React.createElement(this.props.tagName, null, this.props.children);
+    }
+});
+
 /**
  * Makes a function that takes an array of tokens and a start index and returns a react element.
  * Presumes that a closing token follows.
@@ -31,7 +37,8 @@ function basicContainerTag(tagName, tokenName) {
     var tokenNameS = tokenName || tagName;
     return function(tokens, startNum) {
         var ret = makeTags(tokens, startNum + 1, tokenNameS + '_close');
-        return [React.createElement(tagName, null, ret[0]), ret[1] + 1]
+        //return [React.createElement(tagName, null, ret[0]), ret[1] + 1]
+        return [<LineNumberComponent tagName={tagName} token={tokens[ret[1]]}>{ret[0]}</LineNumberComponent>, ret[1] + 1]
     }
 }
 
@@ -44,7 +51,8 @@ function basicContainerTag(tagName, tokenName) {
  */
 function basicEmptyTag(tagName) {
     return function(tokens, startNum) {
-        return [React.createElement(tagName, null, null), startNum + 1];
+        //return [React.createElement(tagName, null, null), startNum + 1];
+        return [<LineNumberComponent tagName={tagName} token={tokens[startNum]}></LineNumberComponent>, startNum + 1];
     }
 }
 
@@ -63,16 +71,19 @@ var types = {
             return [containing[0], containing[1] + 1];
             // React.createElement('span', {'line': token.lines[0]},
         } else {
-            return [React.createElement('p', null, containing[0]), containing[1] + 1];
+            //return [React.createElement('p', null, containing[0]), containing[1] + 1];
+            return [<LineNumberComponent tagName='p' token={token}>{containing[0]}</LineNumberComponent>, containing[1] + 1];
         }
     },
     heading: function(tokens, startNum, token) {
         var ret = makeTags(tokens, startNum + 1, 'heading_close');
-        return [React.createElement('h' + token.hLevel, {'line': token.lines[0]}, ret[0]), ret[1] + 1];
+        //return [React.createElement('h' + token.hLevel, {'line': token.lines[0]}, ret[0]), ret[1] + 1];
+        return [<LineNumberComponent tagName={'h' + token.hLevel} token={token}>{ret[0]}</LineNumberComponent>, ret[1] + 1];
     },
 
     fence: function(tokens, startNum, token) {
-        return [React.createElement('pre', null, [React.createElement('code', null, [token.content])]), startNum + 1];
+        //return [React.createElement('pre', null, [React.createElement('code', null, [token.content])]), startNum + 1];
+        return [<LineNumberComponent tagName='pre' token={token}>{token.content}</LineNumberComponent>, startNum + 1];
     },
     code: function(tokens, startNum, token) {
         var element = React.createElement('code', null, [token.content]);
@@ -207,6 +218,7 @@ module.exports = {
      * @returns {*}
      */
     renderTokens: function(tokens) {
+        console.log(tokens);
         var tags = makeTags(tokens, 0, null);
         return React.createElement('div', null, tags[0]);
     }
