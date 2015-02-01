@@ -9,10 +9,6 @@ var CursorRootComponent = React.createClass({
             users: []
         }
     },
-    calculateCursorPosition: function(index) {
-        var cm = this.props.editor;
-        return cm.cursorCoords(cm.clipPos(cm.getDoc().posFromIndex(index)), 'local')
-    },
     render: function() {
         var componentThis = this;
 
@@ -21,18 +17,7 @@ var CursorRootComponent = React.createClass({
             // In each user's cursor container, there may be multiple cursors. They are keyed by their position in the
             // array.
             var userCursors = _.map(value.selections, function(value, cursorNum) {
-                var cursorPos = componentThis.calculateCursorPosition(value.head);
-                return (
-                    <div
-                        key={cursorNum}
-                        style={{
-                            position: 'absolute',
-                            top: cursorPos.bottom,
-                            left: cursorPos.left
-                        }}>
-                        <UserCursorComponent name={userName}/>
-                    </div>
-                );
+                return <UserCursorComponent key={cursorNum} name={userName} cursorRange={value} editor={componentThis.props.editor}/>;
             });
             return (
                 <div key={userName}>
@@ -50,14 +35,10 @@ var CursorRootComponent = React.createClass({
 function CodeMirrorUserSelection(cm) {
     this.cm = cm;
 
-    this.selectionState = {};
-
     var container = document.createElement('div');
     container.style.position = 'absolute';
     this.cm.display.sizer.insertBefore(container, this.cm.display.sizer.firstChild);
     this.component = React.render(<CursorRootComponent editor={this.cm}/>, container);
-
-
 }
 
 CodeMirrorUserSelection.prototype.setUserCursors = function(userCursors) {

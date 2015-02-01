@@ -21,7 +21,8 @@ var CodeMirrorDocumentEditor = React.createClass({
         return {
             mode: 'markdown',
             theme: 'neat',
-            lineNumbers: true
+            lineNumbers: true,
+            lineWrapping: true
         }
     },
 
@@ -77,7 +78,7 @@ var CodeMirrorDocumentEditor = React.createClass({
         this.editorDocumentAdapter.applyOperation(operation);
     },
     onSelectionsChange: function() {
-        this.editorDocumentSelectionManager.setUserCursors(this.document.users);
+        this.editorDocumentSelectionManager.setUserCursors(this.document.getOtherUsers());
     },
 
     attachDocumentListeners: function() {

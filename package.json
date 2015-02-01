@@ -16,5 +16,10 @@
     "reflux": "~0.2.3",
     "6to5ify": "~3.1.2",
     "gulp-6to5": "~2.0.2"
+  },
+  "jest": {},
+  "devDependencies": {
+    "gulp-jest": "^0.3.0",
+    "jest-cli": "^0.2.2"
   }
 }

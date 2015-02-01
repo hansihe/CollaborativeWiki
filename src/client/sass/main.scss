@@ -191,13 +191,26 @@ $sidebar-border: #dddddd;
   color: #ffffff;
   font-family: sans-serif;
 
+  .cursor-bar {
+    background-color: #008000;
+  }
+
+  .cursor-top {
+    background-color: #008000;
+  }
+
   .cursor-name {
+    background-color: #008000;
     z-index: 11;
-    visibility: hidden;
+  //  visibility: hidden;
   }
-  &:hover > .cursor-name {
-    visibility: visible;
-  }
+  //&:hover > .cursor-name {
+  //  visibility: visible;
+  //}
+}
+
+.test {
+  background-color: red;
 }
 
 @import "codemirror";

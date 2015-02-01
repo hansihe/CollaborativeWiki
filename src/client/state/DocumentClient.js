@@ -3,6 +3,7 @@ var _ = require('../../shared/underscore');
 var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
 var EventEndpoint = require('../../shared/EventEndpoint').Endpoint;
+import OTClient from '../ot/OTClient';
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -15,7 +16,7 @@ var EventEndpoint = require('../../shared/EventEndpoint').Endpoint;
 function DocumentClient(stateManager, documentClientManager, id) {
     EventEmitter.call(this);
 
-    ot.Client.call(this);
+    OTClient.call(this);
     this.handshaken = false;
 
     this.id = id;
@@ -43,7 +44,32 @@ function DocumentClient(stateManager, documentClientManager, id) {
     this.outMessage.on(this.handleOutMessage.bind(this));
     this.inMessage.on(this.handleInMessage.bind(this));
 }
-_.extend(DocumentClient.prototype, EventEmitter.prototype, ot.Client.prototype);
+_.extend(DocumentClient.prototype, EventEmitter.prototype, OTClient.prototype);
+
+/**
+ * Called by the server as a callback from the RPC performed in DocumentClient.onConnected.
+ * Contains failure state/information needed for the DocumentClient to start.
+ */
+DocumentClient.prototype.channelInitCallback = function(success, revision, document, users) {
+    console.log("DocumentClient init success: ", success, " Revision: ", revision);
+
+    this.revision = revision;
+    this.document = document;
+    this.handshaken = true;
+    this.users = _.reduce(users, function(result, user) {
+        result[user] = {
+            selections: []
+        };
+        return result;
+    }, {});
+
+    this.text = document;
+
+    this.emit('remote');
+    this.emit('documentReplace', document);
+    this.documentChangeEvent.emit();
+    this.emit('initialState', this);
+};
 
 DocumentClient.prototype.handleInMessage = function(message) {
     var type = message.type;
@@ -53,12 +79,13 @@ DocumentClient.prototype.handleInMessage = function(message) {
             if (message.sender == this.stateManager.userId) {
                 this.serverAck(operation);
             } else {
+                console.log("Server", operation.ops);
                 this.applyServer(operation);
+                console.log("Server End");
             }
             break;
         }
         case 'selection': {
-            console.log(message);
             this.users[message.sender] = {
                 selections: message.selections
             };
@@ -118,7 +145,11 @@ DocumentClient.prototype.destroyDocument = function() {
  * Updates the document, performs various OT magics, and transmits to the server.
  */
 DocumentClient.prototype.performClientOperation = function(operation) {
+    this.text = operation.apply(this.text);
+    this.documentChangeEvent.emit();
+    console.log("Client", operation.ops);
     this.applyClient(operation);
+    console.log("Client End");
 };
 
 /**
@@ -130,6 +161,10 @@ DocumentClient.prototype.performSelection = function(selection) {
         'type': 'selection',
         'selections': selection
     });
+};
+
+DocumentClient.prototype.getOtherUsers = function() {
+    return _.omit(this.users, this.stateManager.userId);
 };
 
 DocumentClient.prototype.isConnected = function() {
@@ -156,36 +191,11 @@ DocumentClient.prototype.onConnected = function() {
 };
 
 /**
- * Called by the server as a callback from the RPC performed in DocumentClient.onConnected.
- * Contains failure state/information needed for the DocumentClient to start.
- */
-DocumentClient.prototype.channelInitCallback = function(success, revision, document, users) {
-    console.log("DocumentClient init success: ", success, " Revision: ", revision);
-
-    this.revision = revision;
-    this.document = document;
-    this.handshaken = true;
-    this.users = _.reduce(users, function(result, user) {
-        result[user] = {
-            selections: []
-        };
-        return result;
-    }, {});
-
-    this.text = document;
-
-    this.emit('remote');
-    this.emit('documentReplace', document);
-    this.documentChangeEvent.emit();
-    this.emit('initialState', this);
-};
-
-/**
  * Called by ot.Client when we should transmit a operation to the server.
  */
 DocumentClient.prototype.sendOperation = function(revision, operation) {
-    this.text = operation.apply(this.text);
-    this.documentChangeEvent.emit();
+    //this.text = operation.apply(this.text);
+    //this.documentChangeEvent.emit();
 
     this.outMessage.emit({
         'type': 'operation',

@@ -110,7 +110,7 @@ OTServer.prototype.processLocalUserOperation = function (data) {
             // ... and transform the operation against all these operations ...
             var transform = ot.TextOperation.transform;
             for (var i = 0; i < concurrentOperations.length; i++) {
-                operation = transform(ot.TextOperation.fromJSON(JSON.parse(concurrentOperations[i])), operation)[1];
+                operation = transform(operation, ot.TextOperation.fromJSON(JSON.parse(concurrentOperations[i])))[0];
             }
 
             // ... and apply that on the document.

@@ -13,6 +13,6 @@ gulp.task('transforms', function() {
         .pipe(sourceMaps.init())
         .pipe(to5())
         .pipe(react())
-        .pipe(sourceMaps.write())
+        .pipe(sourceMaps.write('./'))
         .pipe(gulp.dest(config.transform.dest));
 });

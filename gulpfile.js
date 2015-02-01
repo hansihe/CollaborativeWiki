@@ -1,5 +1,4 @@
 var gulp = require('gulp');
-var browserify = require('browserify');
 var sass = require('node-sass');
 var reactify = require('reactify');
 

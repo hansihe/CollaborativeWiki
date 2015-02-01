@@ -1,8 +1,6 @@
 var ot = require('ot');
 
-module.exports = (function (global) {
-    'use strict';
-
+module.exports = (function () {
     var TextOperation = ot.TextOperation;
     var Selection = ot.Selection;
 
@@ -331,4 +329,4 @@ module.exports = (function (global) {
 
     return CodeMirrorAdapter;
 
-}(this));
+}());
