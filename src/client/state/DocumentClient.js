@@ -85,8 +85,15 @@ DocumentClient.prototype.handleInMessage = function(message) {
             break;
         }
         case 'selection': {
+            let selections = message.selections;
+
+            if (this.outstanding) {
+                selections = ClientSelectionHelper.transformRanges(message.selections, this.outstanding);}
+            if (this.buffer) {
+                selections = ClientSelectionHelper.transformRanges(message.selections, this.buffer);}
+
             this.users[message.sender] = {
-                selections: message.selections
+                selections: selections
             };
             this.selectionsChangeEvent.emit();
             break;
@@ -147,10 +154,7 @@ DocumentClient.prototype.performClientOperation = function(operation) {
     this.text = operation.apply(this.text);
     this.documentChangeEvent.emit();
 
-    _.map(this.users, function(value, key, object) {
-        object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
-    });
-    this.selectionsChangeEvent.emit();
+    this.transformSelections(operation);
 
     this.applyClient(operation);
 };
@@ -215,12 +219,16 @@ DocumentClient.prototype.applyOperation = function(operation) {
     this.text = operation.apply(this.text);
     this.documentChangeEvent.emit();
 
+    this.transformSelections(operation);
+
+    this.serverOperationEvent.emit(operation);
+};
+
+DocumentClient.prototype.transformSelections = function(operation) {
     _.map(this.users, function(value, key, object) {
         object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
     });
     this.selectionsChangeEvent.emit();
-
-    this.serverOperationEvent.emit(operation);
 };
 
 module.exports = DocumentClient;
