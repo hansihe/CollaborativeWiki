@@ -34,15 +34,16 @@ class OTClient {
     applyClient(operation) {
         switch (this.state) {
             case states.synchronized: {
-                this.state = states.awaiting;
+                this.sendOperation(this.revision, operation);
                 this.outstanding = operation;
 
-                this.sendOperation(this.revision, operation);
+                this.state = states.awaiting;
                 break;
             }
             case states.awaiting: {
-                this.state = states.awaitingBuffer;
                 this.buffer = operation;
+
+                this.state = states.awaitingBuffer;
                 break;
             }
             case states.awaitingBuffer: {
@@ -88,12 +89,17 @@ class OTClient {
                 throw "state is synchronized, there is no operation to ack";
             }
             case states.awaiting: {
+                this.outstanding = null;
+
                 this.state = states.synchronized;
                 break;
             }
             case states.awaitingBuffer: {
                 this.sendOperation(this.revision, this.buffer);
+
                 this.outstanding = this.buffer;
+                this.buffer = null;
+
                 this.state = states.awaiting;
                 break;
             }
