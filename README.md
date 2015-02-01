@@ -22,3 +22,4 @@ Please note that this is not safe at all for use on open networks. The server do
 ### Lower priority
 * [ ] Accounts
 * [ ] History viewer (probably with a fancy slider so you can go back and fourth through the document history)
+* [ ] Abstract the parts responsible for ot out to another module. (There is already a pretty good separation here, should be fairly easy)
