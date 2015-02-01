@@ -12,7 +12,7 @@ Please note that this is not safe at all for use on open networks. The server do
 * [x] Text synchronization across clients using ot
 * [x] Proper editor (codemirror)
 * [x] Realtime markdown preview utilizing react.js diffing
-* [ ] Cursor synchronization
+* [x] Cursor synchronization
 * [x] Messages for when people join/leave documents
 * [x] Proper document lifecycle management on both client and server
 * [ ] Implement reconnect on disconnect
