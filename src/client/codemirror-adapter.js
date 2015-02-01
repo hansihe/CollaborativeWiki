@@ -1,6 +1,8 @@
 var ot = require('ot');
 
-module.exports = (function () {
+module.exports = (function (global) {
+    'use strict';
+
     var TextOperation = ot.TextOperation;
     var Selection = ot.Selection;
 
@@ -8,7 +10,6 @@ module.exports = (function () {
         this.cm = cm;
         this.ignoreNextChange = false;
         this.changeInProgress = false;
-        this.selectionChanged = false;
 
         bind(this, 'onChanges');
         bind(this, 'onChange');
@@ -176,16 +177,13 @@ module.exports = (function () {
             var pair = CodeMirrorAdapter.operationFromCodeMirrorChanges(changes, this.cm);
             this.trigger('change', pair[0], pair[1]);
         }
-        if (this.selectionChanged) { this.trigger('selectionChange'); }
         this.changeInProgress = false;
         this.ignoreNextChange = false;
     };
 
     CodeMirrorAdapter.prototype.onCursorActivity =
         CodeMirrorAdapter.prototype.onFocus = function () {
-            if (this.changeInProgress) {
-                this.selectionChanged = true;
-            } else {
+            if (!this.changeInProgress) {
                 this.trigger('selectionChange');
             }
         };
@@ -225,72 +223,6 @@ module.exports = (function () {
         this.cm.setSelections(ranges);
     };
 
-    var addStyleRule = (function () {
-        var added = {};
-        var styleElement = document.createElement('style');
-        document.documentElement.getElementsByTagName('head')[0].appendChild(styleElement);
-        var styleSheet = styleElement.sheet;
-
-        return function (css) {
-            if (added[css]) { return; }
-            added[css] = true;
-            styleSheet.insertRule(css, (styleSheet.cssRules || styleSheet.rules).length);
-        };
-    }());
-
-    CodeMirrorAdapter.prototype.setOtherCursor = function (position, color, clientId) {
-        var cursorPos = this.cm.posFromIndex(position);
-        var cursorCoords = this.cm.cursorCoords(cursorPos);
-        var cursorEl = document.createElement('span');
-        cursorEl.className = 'other-client';
-        cursorEl.style.display = 'inline-block';
-        cursorEl.style.padding = '0';
-        cursorEl.style.marginLeft = cursorEl.style.marginRight = '-1px';
-        cursorEl.style.borderLeftWidth = '2px';
-        cursorEl.style.borderLeftStyle = 'solid';
-        cursorEl.style.borderLeftColor = color;
-        cursorEl.style.height = (cursorCoords.bottom - cursorCoords.top) * 0.9 + 'px';
-        cursorEl.style.zIndex = 0;
-        cursorEl.setAttribute('data-clientid', clientId);
-        return this.cm.setBookmark(cursorPos, { widget: cursorEl, insertLeft: true });
-    };
-
-    CodeMirrorAdapter.prototype.setOtherSelectionRange = function (range, color, clientId) {
-        var match = /^#([0-9a-fA-F]{6})$/.exec(color);
-        if (!match) { throw new Error("only six-digit hex colors are allowed."); }
-        var selectionClassName = 'selection-' + match[1];
-        var rule = '.' + selectionClassName + ' { background: ' + color + '; }';
-        addStyleRule(rule);
-
-        var anchorPos = this.cm.posFromIndex(range.anchor);
-        var headPos   = this.cm.posFromIndex(range.head);
-
-        return this.cm.markText(
-            minPos(anchorPos, headPos),
-            maxPos(anchorPos, headPos),
-            { className: selectionClassName }
-        );
-    };
-
-    CodeMirrorAdapter.prototype.setOtherSelection = function (selection, color, clientId) {
-        var selectionObjects = [];
-        for (var i = 0; i < selection.ranges.length; i++) {
-            var range = selection.ranges[i];
-            if (range.isEmpty()) {
-                selectionObjects[i] = this.setOtherCursor(range.head, color, clientId);
-            } else {
-                selectionObjects[i] = this.setOtherSelectionRange(range, color, clientId);
-            }
-        }
-        return {
-            clear: function () {
-                for (var i = 0; i < selectionObjects.length; i++) {
-                    selectionObjects[i].clear();
-                }
-            }
-        };
-    };
-
     CodeMirrorAdapter.prototype.trigger = function (event) {
         var args = Array.prototype.slice.call(arguments, 1);
         var action = this.callbacks && this.callbacks[event];
@@ -301,21 +233,6 @@ module.exports = (function () {
         this.ignoreNextChange = true;
         CodeMirrorAdapter.applyOperationToCodeMirror(operation, this.cm);
     };
-
-    CodeMirrorAdapter.prototype.registerUndo = function (undoFn) {
-        this.cm.undo = undoFn;
-    };
-
-    CodeMirrorAdapter.prototype.registerRedo = function (redoFn) {
-        this.cm.redo = redoFn;
-    };
-
-    // Throws an error if the first argument is falsy. Useful for debugging.
-    function assert (b, msg) {
-        if (!b) {
-            throw new Error(msg || "assertion error");
-        }
-    }
 
     // Bind a method to an object, so it doesn't matter whether you call
     // object.method() directly or pass object.method as a reference to another
@@ -329,4 +246,4 @@ module.exports = (function () {
 
     return CodeMirrorAdapter;
 
-}());
+}(this));

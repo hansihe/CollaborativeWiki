@@ -61,9 +61,7 @@ class OTClient {
                 break;
             }
             case states.awaiting: {
-                console.log(this.outstanding.ops, this.outstanding.baseLength, operation.ops, operation.baseLength);
                 let pair = operation.constructor.transform(this.outstanding, operation);
-                console.log(pair[0].ops, pair[1].ops);
                 this.applyOperation(pair[1]);
                 this.outstanding = pair[0];
                 break;
@@ -95,6 +93,7 @@ class OTClient {
             }
             case states.awaitingBuffer: {
                 this.sendOperation(this.revision, this.buffer);
+                this.outstanding = this.buffer;
                 this.state = states.awaiting;
                 break;
             }

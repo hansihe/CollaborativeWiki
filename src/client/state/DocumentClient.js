@@ -4,6 +4,7 @@ var thisify = require('../../shared/thisify');
 var EventEmitter = require('events').EventEmitter;
 var EventEndpoint = require('../../shared/EventEndpoint').Endpoint;
 import OTClient from '../ot/OTClient';
+import ClientSelectionHelper from '../ot/ClientSelectionHelper';
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -79,9 +80,7 @@ DocumentClient.prototype.handleInMessage = function(message) {
             if (message.sender == this.stateManager.userId) {
                 this.serverAck(operation);
             } else {
-                console.log("Server", operation.ops);
                 this.applyServer(operation);
-                console.log("Server End");
             }
             break;
         }
@@ -147,9 +146,13 @@ DocumentClient.prototype.destroyDocument = function() {
 DocumentClient.prototype.performClientOperation = function(operation) {
     this.text = operation.apply(this.text);
     this.documentChangeEvent.emit();
-    console.log("Client", operation.ops);
+
+    _.map(this.users, function(value, key, object) {
+        object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
+    });
+    this.selectionsChangeEvent.emit();
+
     this.applyClient(operation);
-    console.log("Client End");
 };
 
 /**
@@ -210,9 +213,14 @@ DocumentClient.prototype.sendOperation = function(revision, operation) {
  */
 DocumentClient.prototype.applyOperation = function(operation) {
     this.text = operation.apply(this.text);
+    this.documentChangeEvent.emit();
+
+    _.map(this.users, function(value, key, object) {
+        object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
+    });
+    this.selectionsChangeEvent.emit();
 
     this.serverOperationEvent.emit(operation);
-    this.documentChangeEvent.emit();
 };
 
 module.exports = DocumentClient;

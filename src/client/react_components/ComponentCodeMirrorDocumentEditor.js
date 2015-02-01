@@ -56,6 +56,9 @@ var CodeMirrorDocumentEditor = React.createClass({
         this.editorDocumentSelectionManager = new CodeMirrorUserSelectionManager(editor);
         this.editor.on('changes', this.editorDocumentSelectionManager.editorChange.bind(this.editorDocumentSelectionManager));
 
+        this.editor.undo = function() {};
+        this.editor.redo = function() {};
+
         this.editorDocumentAdapter.registerCallbacks({
             change: function(operation, inverse) {
                 documentClient.performClientOperation(operation);
