@@ -31,19 +31,10 @@ function ConnectionState(stream) {
 
             document.documentEvent.on(clientConnectionThis.boundDocumentEventTransmitter);
 
-            var multi = services.redisClient.redisConnection.multi();
-
-            multi.get(document.propertyNames['document']);
-            multi.llen(document.propertyNames['operations']);
-            multi.zrange(document.propertyNames['editingUsers'], 0, -1);
-
-            multi.exec(function(err, results) {
-                if (document) {
-                    var documentText = results[0] || "";
-                    callback(true, results[1], documentText, results[2]);
-                } else {
-                    callback(false);
-                }
+            document.dal.getInitialDocumentData(id).done(function(data) {
+                callback(true, data.revision, data.document, data.currentUsers);
+            }, function() {
+                callback(false);
             });
 
             clientConnectionThis.joinedDocuments.push(document);
