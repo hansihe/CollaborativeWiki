@@ -1,7 +1,7 @@
-var NetworkChannel = require('../../shared/NetworkChannel');
+var NetworkChannel = require('../ClientNetworkChannel');
 var DocumentClientManager = require('./DocumentClientManager');
 var EventEmitter = require('events').EventEmitter;
-var shoe = require('shoe');
+var shoe = require('reconnect-shoe');
 var thisify = require('../../shared/thisify');
 var _ = require('../../shared/underscore');
 var ot = require('ot');
@@ -28,8 +28,7 @@ function ClientState() {
 
     this.documentClientManager = new DocumentClientManager(this);
 
-    this.sock = shoe('/endpoint');
-    this.networkChannel = new NetworkChannel(this.sock, {
+    this.networkChannel = new NetworkChannel({
         // RPC
         documentMessage: function(message) {
             clientStateThis.documentClientManager.incomingServerDocumentMessage(message);

@@ -1,4 +1,4 @@
-var NetworkChannel = require('./../shared/NetworkChannel');
+var NetworkChannel = require('./ServerNetworkChannel');
 var EventEmitter = require('events').EventEmitter;
 var ot = require('ot');
 var _ = require('../shared/underscore');

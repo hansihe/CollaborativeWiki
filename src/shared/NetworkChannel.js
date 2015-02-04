@@ -1,49 +1,70 @@
 var dnode = require('dnode');
+var shoe = require('shoe');
 var PubSub = require('./PubSub');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var _ = require('./underscore');
 
-function Stream(stream, rpcMethods) {
-    var streamThis = this;
+class NetworkChannel extends EventEmitter {
 
-    this.pubsub = new PubSub();
+    constructor(rpcMethods) {
+        super();
 
-    this.rpc = dnode(_.assign(rpcMethods, {
-        e: function(type, data) {
-            streamThis.pubsub.incoming(type, data);
-        }
-    }));
+        var this_ = this;
+        this.rpcMethods = rpcMethods;
 
-    this._outQueue = [];
-    this.pubsub.outgoing = function(type, data) {
-        if(streamThis.rpcRemote) {
-            streamThis.rpcRemote.e(type, data);
-        } else {
-            streamThis._outQueue.push({'t': type, 'd': data});
-        }
-    };
+        this.pubsub = new PubSub();
 
-    this.rpc.on('remote', function(remote) {
-        streamThis.rpcRemote = remote;
+        this._outQueue = [];
+        this.pubsub.outgoing = function(type, data) {
+            if(this_.rpcRemote) {
+                this_.rpcRemote.e(type, data);
+            } else {
+                this_._outQueue.push({'t': type, 'd': data});
+            }
+        };
 
-        streamThis._outQueue.forEach(function(item) {
-            streamThis.pubsub.outgoing(item['t'], item['d']);
+    }
+
+    newStream(stream) {
+        this.stream = stream;
+
+        this.rpc = this.makeRpc();
+        this.rpcRemote = null;
+
+        this.rpc.pipe(stream).pipe(this.rpc);
+
+    }
+
+    makeRpc() {
+        var this_ = this;
+
+        let rpc = dnode(_.assign(this_.rpcMethods, {
+            e: function(type, data) {
+                this_.pubsub.incoming(type, data);
+            }
+        }));
+
+        rpc.on('remote', function(remote) {
+            this_.rpcRemote = remote;
+
+            this_._outQueue.forEach(function(item) {
+                this_.pubsub.outgoing(item['t'], item['d']);
+            });
+            this_._outQueue = [];
+
+            this_.emit('remote', remote);
+            this_.emit('connected', this_);
         });
-        streamThis._outQueue = [];
 
-        streamThis.emit('remote', remote);
-        streamThis.emit('connected', streamThis);
-    });
+        rpc.on('end', function() {
+            this_.emit('end');
+            this_.emit('disconnected');
+        });
 
-    this.rpc.on('end', function() {
-        streamThis.emit('end');
-        streamThis.emit('disconnected');
-    });
+        return rpc;
+    }
 
-    this.rpc.pipe(stream).pipe(this.rpc);
 }
 
-util.inherits(Stream, EventEmitter);
-
-module.exports = Stream;
+module.exports = NetworkChannel;
