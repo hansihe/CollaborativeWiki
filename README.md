@@ -17,7 +17,7 @@ Please note that this is not safe at all for use on open networks. The server do
 * [x] Proper document lifecycle management on both client and server
 * [ ] Implement reconnect on disconnect
 * [ ] Stop trusting the damned client (verify inputs, fail gracefully)
-* [ ] Proper dependency management
+* [x] Proper dependency management
 
 ### Lower priority
 * [ ] Accounts
