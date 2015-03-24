@@ -27,19 +27,19 @@ class Redis extends DALInterface {
     }
 
     subscribeDocumentEvent(documentId, listener) {
-        this.client.subscribe(documentId, listener);
+        this.client.subscribe(this.getKeyName('documentStream', documentId), listener);
     }
 
     unsubscribeDocumentEvent(documentId, listener) {
-        this.client.unSubscribe(documentId, listener);
+        this.client.unSubscribe(this.getKeyName('documentStream', documentId), listener);
     }
 
     publishDocumentEvent(documentId, event) {
-        this.client.publish(documentId, event);
+        this.client.publish(this.getKeyName('documentStream', documentId), event);
     }
 
     publishDocumentEventOnTransaction(transaction, documentId, event) {
-        transaction.publish(documentId, JSON.stringify(event));
+        transaction.publish(this.getKeyName('documentStream', documentId), JSON.stringify(event));
     }
 
     lock(task, type='lock') {

@@ -17,7 +17,10 @@ import ClientSelectionHelper from '../ot/ClientSelectionHelper';
 function DocumentClient(stateManager, documentClientManager, id) {
     EventEmitter.call(this);
 
-    OTClient.call(this);
+    this.otClient = new OTClient();
+    this.otClient.sendOperation = (revision, operation) => this.sendOperation(revision, operation);
+    this.otClient.applyOperation = operation => this.applyOperation(operation);
+    
     this.handshaken = false;
 
     this.id = id;
@@ -54,7 +57,7 @@ _.extend(DocumentClient.prototype, EventEmitter.prototype, OTClient.prototype);
 DocumentClient.prototype.channelInitCallback = function(success, revision, document, users) {
     console.log("DocumentClient init success: ", success, " Revision: ", revision);
 
-    this.revision = revision;
+    this.otClient.revision = revision;
     this.document = document;
     this.handshaken = true;
     this.users = _.reduce(users, function(result, user) {
@@ -78,9 +81,9 @@ DocumentClient.prototype.handleInMessage = function(message) {
         case 'operation': {
             var operation = ot.TextOperation.fromJSON(message.operation);
             if (message.sender == this.stateManager.userId) {
-                this.serverAck(operation);
+                this.otClient.serverAck(operation);
             } else {
-                this.applyServer(operation);
+                this.otClient.applyServer(operation);
             }
             break;
         }
@@ -156,7 +159,7 @@ DocumentClient.prototype.performClientOperation = function(operation) {
 
     this.transformSelections(operation);
 
-    this.applyClient(operation);
+    this.otClient.applyClient(operation);
 };
 
 /**

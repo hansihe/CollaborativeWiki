@@ -5,6 +5,16 @@ var Link = require('react-router').Link;
 
 var TopBarLocationEditComponent = require('./ComponentTopBarLocationEdit');
 
+var ConnectionStatusComponent = React.createClass({
+    render: function() {
+        return (
+            <div className="connection-status">
+                <div className="icon icon-flash green"></div>
+            </div>
+        );
+    }
+});
+
 var ActionBarComponent = React.createClass({
     mixins: [ReactRouter.State, ReactRouter.Navigation],
 
@@ -17,23 +27,10 @@ var ActionBarComponent = React.createClass({
     render: function() {
         return (
             <nav className="top-bar">
-                <ul className="title-area">
-                    <li className="name">
-                        <h1><Link to="index">My Wiki</Link></h1>
-                    </li>
-                </ul>
-                <section className="top-bar-section">
-                    <ul className="left">
-                        <TopBarLocationEditComponent location={this.getWikiLocation()} navigationCallback={this.navigateToWikiPage}/>
-                    </ul>
-                </section>
-                <section className="top-bar-section">
-                    <ul className="right">
-                        <li>
-                            <Link to="login">Sign in</Link>
-                        </li>
-                    </ul>
-                </section>
+                <TopBarLocationEditComponent location={this.getWikiLocation()} navigationCallback={this.navigateToWikiPage}/>
+                <div className="right-segment">
+                    <ConnectionStatusComponent/>
+                </div>
             </nav>
         )
     },
@@ -49,7 +46,7 @@ var ActionBarComponent = React.createClass({
     },
 
     navigateToWikiPage: function(id) {
-        this.transitionTo('page', {documentId: id});
+        this.transitionTo('document', {documentId: id});
     }
 });
 

@@ -21,7 +21,7 @@ var CodeMirrorDocumentEditor = React.createClass({
         return {
             mode: 'markdown',
             theme: 'neat',
-            lineNumbers: true,
+            lineNumbers: false,
             lineWrapping: true
         }
     },

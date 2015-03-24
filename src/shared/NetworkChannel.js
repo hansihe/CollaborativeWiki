@@ -4,6 +4,7 @@ var PubSub = require('./PubSub');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var _ = require('./underscore');
+var Rx = require('rx');
 
 class NetworkChannel extends EventEmitter {
 
@@ -44,6 +45,9 @@ class NetworkChannel extends EventEmitter {
                 this_.pubsub.incoming(type, data);
             }
         }));
+
+        this.connectedEvents = Rx.Observable.fromEvent(rpc, 'remote');
+        this.disconnectedEvents = Rx.Observable.fromEvent(rpc, 'end');
 
         rpc.on('remote', function(remote) {
             this_.rpcRemote = remote;

@@ -21,7 +21,7 @@ var DocumentEditComponent = React.createClass({
                     style={{height: "100%", flex: "1 0 0"}}/>
                 <DocumentRendererComponent
                     documentId={documentId}
-                    style={{flex: "1 0 0", borderLeft: "solid 1px #ddd", paddingLeft: "10px", overflowY: "scroll"}}/>
+                    style={{flex: "1 0 0", borderLeft: "solid 1px #ddd", paddingLeft: "10px", paddingRight: "10px", overflowY: "scroll"}}/>
             </div>
         );
     }

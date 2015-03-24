@@ -80,6 +80,7 @@ function ConnectionState(stream) {
 _.extend(ConnectionState.prototype, EventEmitter.prototype);
 
 ConnectionState.prototype._documentEventTransmitter = function(message) {
+    console.log(message);
     this.channel.rpcRemote.documentMessage(message);
 };
 

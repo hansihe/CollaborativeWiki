@@ -23,23 +23,12 @@ var DocumentEditComponent = React.createClass({
 
     render: function() {
         var documentId = this.getParams().documentId || 'index';
-        var test = this.state.uiState.usersSidebarOpen ? (<div key="usersBar" style={{flex: "0 0 200px", height: "100%", width: "200px"}}><UserBarComponent documentId={documentId}/></div>) : undefined;
         return (
-            <ReactCSSTransitionGroup
-                component="div"
-                transitionName="flex-animation"
-                className="flex-animation-container">
-                <div
-                    key="routeContainer"
-                    style={{flex: "1 0 0", height: "100%", overflow: "hidden"}}>
-                    <ReactRouter.RouteHandler/>
-                </div>
-                {test}
-                <SideBarComponent
-                    key="sidebar"
-                    editing={true}
-                    test={this.test}/>
-            </ReactCSSTransitionGroup>
+            <div
+                key="routeContainer"
+                style={{height: "100%", overflow: "hidden"}}>
+                <ReactRouter.RouteHandler/>
+            </div>
         );
     },
     componentWillMount: function() {

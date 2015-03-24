@@ -8,19 +8,15 @@ var LocationEdit = React.createClass({
     },
 
     render: function() {
+        console.log(this.state.location);
         return (
-            <li className="has-form">
-                <input
-                    ref="input"
-                    type="text"
-                    placeholder="Wiki page"
-                    className="location-edit-box"
-                    style={{width: "200%"}}
+            <div className="page-nav-container">
+                <input type="text" className="page-nav" 
                     value={this.state.location}
                     onBlur={this.revertValue}
                     onChange={this.handleChange}
                     onKeyDown={this.handleKeyDown}/>
-            </li>
+            </div>
         );
     },
     componentWillReceiveProps: function(nextProps) {

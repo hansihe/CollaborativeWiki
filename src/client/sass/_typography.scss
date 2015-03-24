@@ -1,0 +1,165 @@
+// Nicked from https://github.com/Stanko/skyblue
+// (MIT License)
+
+// Headers
+h1,h2,h3,h4,h5,h6{
+	line-height: 1.2em;
+	margin: 0;
+	font-weight: 300;
+	font-family: 'Dosis', 'Helvetica Neue', Helvetica, sans-serif;
+	margin-bottom: 0.5em;
+}
+
+h1{
+	font-size: 2.4em;
+}
+
+h2{
+	font-size: 2em;
+}
+
+h3{
+	font-size: 1.7em;
+}
+
+h4{
+	font-size: 1.4em;
+}
+
+h5{
+	font-size: 1.2em;
+}
+
+h6{
+	font-size: 1em;
+}
+
+
+
+// Paragraphs
+p{
+	line-height: $line-height;
+	margin-bottom: $font-size;
+}
+small{
+	font-size: 0.75em;
+}
+.big{
+	font-size: 1.25em;
+}
+
+b, strong{
+	font-weight: $bold;
+}
+i, em{
+	font-style: italic;
+}
+
+
+img{
+	max-width: 100%;
+}
+
+
+
+// Links
+a{
+	color: $main-color + #222;
+	transition: all $transition-time;
+	text-decoration: none;
+	&.secundary{ color: $success-color; }
+}
+a:active, a:focus, a:hover{
+	color: $main-color - $color-diff;
+	&.secundary{ color: $success-color - $color-diff; }
+}
+
+
+
+// Lists
+ul, ol{
+	margin-bottom: $font-size;
+	padding-left: 22px;
+	ul, ol{
+		margin-bottom: 0;
+	}
+}
+
+ul{
+	li{
+		list-style: disc outside none;
+		li{
+			list-style: circle outside none;
+		}
+	}
+}
+
+ol{
+	li{
+		list-style: decimal outside none;
+	}
+}
+
+ul, ol{
+	&.unstyled{
+		margin: 0;
+		padding: 0;
+		li{
+			margin: 0;
+			padding: 0;
+			list-style: none;
+		}
+	}
+}
+
+// Blockquote
+blockquote{
+
+	border-left: 2px solid $gray2;
+	padding: 0.5em 1em;
+	margin-bottom: $font-size;
+	font-size: 1.1em;
+	color: $gray5;
+
+	cite{
+		font-size: 0.8em;
+		&:before {
+		    content: "— ";
+		}
+	}
+}
+
+hr{
+	border: 0;
+	border-bottom: 1px solid darken($body-background, 7);
+	margin: 20px 0 20px 0;
+	clear: both;
+}
+
+
+
+// Code
+pre, code{
+	font-family: $pre-font-family;
+	font-size: $pre-font-size;
+	line-height: $line-height;
+
+	color: $gray2;
+	background: $gray6;
+	// border: 2px solid $gray2;
+	border-radius: 3px;
+
+	padding: 0.8em 1em;
+
+	white-space: pre-wrap;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+pre{
+	margin-bottom: $font-size;
+}
+code{
+	display: inline-block;
+	padding: 0.1em 0.3em;
+}
+

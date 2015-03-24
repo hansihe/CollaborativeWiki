@@ -1,216 +1,168 @@
 @import "normalize";
 
-@import "foundation/settings";
-@import "foundation/components/grid";
-@import "foundation/components/alert-boxes";
-@import "foundation/components/button-groups";
-@import "foundation/components/buttons";
-@import "foundation/components/clearing";
-@import "foundation/components/dropdown";
-@import "foundation/components/dropdown-buttons";
-@import "foundation/components/forms";
-@import "foundation/components/keystrokes";
-@import "foundation/components/labels";
-@import "foundation/components/panels";
-@import "foundation/components/side-nav";
-@import "foundation/components/split-buttons";
-@import "foundation/components/sub-nav";
-@import "foundation/components/switches";
-@import "foundation/components/tables";
-@import "foundation/components/tooltips";
-@import "foundation/components/top-bar";
-@import "foundation/components/type";
-@import "foundation/components/visibility";
-
-html, body, #root {
-  width: 100%;
-  height: 100%;
+html, body {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+$header-height: 48px;
+$nav-padding: 6px;
+
 .app-root {
-  height: 100%;
-  position: relative;
+    height: 100%;
 
-  .top-bar {
-    z-index: 2;
-
-    li > a.active {
-      background: $topbar-link-bg-active;
-      color: $topbar-link-color-active;
-      &:hover {
-        background: $topbar-link-bg-active-hover;
-        color: $topbar-link-color-active-hover;
-      }
+    .top-bar {
+        position: absolute;
     }
 
-    input.location-edit-box {
-      background-color: inherit;
-      color: #fff;
-      border: 0;
-      box-shadow: none;
-      position: relative;
-
-      transition: border-bottom-color 0.4s;
-      border-bottom: solid 1px darken($topbar-bg-color, 10%);
+    .app-content-wrapper {
+        height: 100%;
+        padding-top: $header-height;
     }
-    input.location-edit-box:focus {
-      border-bottom-color: #eeeeee;
-    }
-  }
-
-  .app-content-wrapper {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding-top: 45px;
-
-    .login-page {
-      margin-top: 24px;
-    }
-  }
 }
 
 .codemirror-container {
-  height: 100%;
-  .CodeMirror {
-    height: 100%;
-  }
+    .CodeMirror {
+        height: 100%;
+    }
+}
+
+.top-bar {
+    width: 100%;
+    height: $header-height;
+
+    background-color: #3F51B5;
+
+    .page-nav-container {
+        float: left;
+        width: 40%;
+        max-width: 500px;
+        padding: $nav-padding;
+
+        &:before {
+            position: absolute;
+            top: 15px;
+            left: 10px;
+
+            font-family: "untitled-font-1" !important;
+            content: 'd';
+            font-size: 1.2em;
+            font-weight: bold;
+
+            color: #303f9f;
+
+            pointer-events: none;
+        }
+
+        .page-nav {
+            height: $header-height - ($nav-padding * 2);
+            width: 100%;
+
+            padding: 8px;
+            padding-left: 26px;
+            border: 0;
+
+            font-size: 1em;
+
+            background-color: #5C6BC0;
+            color: #ffffff;
+            border-radius: 2px;
+
+            transition: box-shadow .2s ease;
+
+            &:focus {
+                box-shadow: 2px 2px 0 #3949AB;
+                outline: none;
+            }
+
+        }
+    }
+
+    .right-segment {
+        float: right;
+
+    }
+
+}
+
+
+.connection-status {
+    position: relative;
+    height: $header-height;
+    width: $header-height - 10;
+
+    .icon {
+        font-size: 1.5em;
+        position: absolute;
+        top: 13px;
+        left: 6px;
+
+        &.green {
+            color: #4CAF50;
+        }
+        &.red {
+            color: #F44336;
+        }
+    }
 }
 
 .markdown-container {
-  img {
-    max-width: 35%;
-  }
-}
+    // Table styles are nicked from https://github.com/yahoo/pure
+    // (MIT License)
+    table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        empty-cells: show;
+        border: 1px solid #cbcbcb;
 
-.display-mode-selector {
-  position: fixed;
-  top: $topbar-height + 10px;
-  right: 60px;
+        td, th {
+            border-left: 1px solid #cbcbcb;
+            border-width: 0 0 0 1px;
+            font-size: inherit;
+            margin: 0;
+            overflow: visible;
+            padding: 0.5em 1em;
+        }
 
-  padding: 0;
-  margin: 0;
-  background-color: #dddddd;
-  opacity: 0.4;
-  display: inline-block;
+        td:first-child, th:first-child {
+            border-left-width: 0;
+        }
 
-  &:hover {
-    opacity: 1;
-  }
-
-  li {
-    list-style: none;
-    display: inline-block;
-    width: auto;
-    padding: 4px 10px;
-    user-select: none;
-
-    &:hover {
-      cursor: pointer;
+        thead {
+            background-color: #e0e0e0;
+            color: #000;
+            text-align: left;
+            vertical-align: bottom;
+        }
     }
-
-    &.active {
-      background-color: #aaaaaa;
-    }
-  }
 }
 
-$sidebar-background: #eeeeee;
-$sidebar-border: #dddddd;
+$gray6: #333;
+$gray5: #555;
+$gray2: #ddd;
 
-.sidebar {
-  $sidebar-width: 40px;
+$body-background: #fbfbfb;
 
-  background-color: $sidebar-background;
-  border-left: solid 1px $sidebar-border;
-  flex: 0 0 ($sidebar-width + 1px);
+$main-color: #4378a7;
+$success-color: #16b6B6;
 
-  .sidebar-button {
-    width: $sidebar-width;
-    height: $sidebar-width;
+$color-diff: #151515;
 
-    overflow: hidden;
+$font-size: 16px;
+$line-height: 1.5em;
+$bold: 700;
 
-    cursor: pointer;
-    &:hover {
-      background-color: darken($sidebar-background, 5);
-    }
-  }
-}
+$transition-time: 0.25s;
 
-.users-sidebar {
-  .sidebar-title {
-    padding: 6px;
+$pre-font-family: "Deja-vu Sans Mono", Monaco, Menlo, Consolas, "Courier New", monospace;
+$pre-font-size: 15px;
 
-    background-color: darken($sidebar-background, 6);
-    margin-bottom: solid 1px darken($sidebar-background, 6);
-  }
-}
-
-.flex-animation-container {
-  display: flex;
-  height: 100%;
-  overflow: hidden;
-
-  transition: all 500ms linear;
-  .flex-animation-leave {
-    -webkit-animation: flexShrink 500ms ease forwards;
-    animation: flexShrink 500ms ease forwards;
-  }
-  .flex-animation-enter {
-    -webkit-animation: flexGrow 500ms ease forwards;
-    animation: flexGrow 500ms ease forwards;
-  }
-}
-@-webkit-keyframes flexShrink {
-  to {
-    flex: .00001;
-  }
-}
-@keyframes flexShrink {
-  to {
-    flex: .00001;
-  }
-}
-@keyframes flexGrow {
-  from {
-    flex: .00001;
-  }
-}
-@-webkit-keyframes flexGrow {
-  from {
-    flex: .00001;
-  }
-}
-
-.other-user-cursor {
-  z-index: 10;
-  cursor: text;
-  color: #ffffff;
-  font-family: sans-serif;
-
-  .cursor-bar {
-    background-color: #008000;
-  }
-
-  .cursor-top {
-    background-color: #008000;
-  }
-
-  .cursor-name {
-    background-color: #008000;
-    z-index: 11;
-  //  visibility: hidden;
-  }
-  //&:hover > .cursor-name {
-  //  visibility: visible;
-  //}
-}
-
-.test {
-  background-color: red;
-}
-
+@import "typography";
 @import "codemirror";
