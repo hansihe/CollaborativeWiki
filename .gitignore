@@ -80,3 +80,5 @@ crashlytics-build.properties
 
 
 build/
+
+*.swp

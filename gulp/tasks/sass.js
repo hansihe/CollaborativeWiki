@@ -4,6 +4,6 @@ var config = require('../config').sass;
 
 gulp.task('sass', function() {
     return gulp.src(config.src)
-        .pipe(sass())
+        .pipe(sass(config))
         .pipe(gulp.dest(config.dest))
 });

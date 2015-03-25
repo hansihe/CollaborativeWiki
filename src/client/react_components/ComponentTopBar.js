@@ -3,7 +3,10 @@ var ReactRouter = require('react-router');
 
 var Link = require('react-router').Link;
 
+var MixinNavigationUtil = require('./MixinNavigationUtil');
+
 var TopBarLocationEditComponent = require('./ComponentTopBarLocationEdit');
+var ComponentEditButton = require('./ComponentEditButton');
 
 var ConnectionStatusComponent = React.createClass({
     render: function() {
@@ -16,18 +19,20 @@ var ConnectionStatusComponent = React.createClass({
 });
 
 var ActionBarComponent = React.createClass({
-    mixins: [ReactRouter.State, ReactRouter.Navigation],
+    mixins: [MixinNavigationUtil],
 
     getInitialState: function() {
         return {
-            location: this.getParams().documentId || 'index'
+            location: this.context.router.getCurrentParams().documentId || 'index'
         }
     },
 
     render: function() {
+        var editButton = this.routeIsDocument() ? (<ComponentEditButton/>) : undefined;
         return (
             <nav className="top-bar">
-                <TopBarLocationEditComponent location={this.getWikiLocation()} navigationCallback={this.navigateToWikiPage}/>
+                <TopBarLocationEditComponent/>
+                {editButton}
                 <div className="right-segment">
                     <ConnectionStatusComponent/>
                 </div>
@@ -35,18 +40,8 @@ var ActionBarComponent = React.createClass({
         )
     },
 
-    getWikiLocation: function() {
-        if (this.getPath() == '/') {
-            return 'index';
-        }
-        if (this.getParams().documentId) {
-            return this.getParams().documentId;
-        }
-        return '';
-    },
+    toggleEditMode: function() {
 
-    navigateToWikiPage: function(id) {
-        this.transitionTo('document', {documentId: id});
     }
 });
 

@@ -12,7 +12,7 @@ var DocumentViewComponent = React.createClass({
     render: function() {
         var documentId = this.getParams().documentId || 'index';
         return (
-            <div style={{overflowY: "scroll", height: "100%"}}>
+/*            <div style={{overflowY: "scroll", height: "100%"}}>
                 <div className="row">
                     <div className="small-12">
                         <div className="panel">
@@ -21,6 +21,12 @@ var DocumentViewComponent = React.createClass({
                                 style={{width: "100%", paddingLeft: "10px"}}/>
                         </div>
                     </div>
+                </div>
+            </div>*/
+            <div className="document-view-standalone-container">
+                <div className="text-container">
+                    <DocumentRendererComponent
+                        documentId={documentId}/>
                 </div>
             </div>
         );

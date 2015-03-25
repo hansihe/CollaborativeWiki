@@ -23,6 +23,7 @@
     "node-uuid": "^1.4.3",
     "ot": "0.0.15",
     "primus": "^3.0.1",
+    "radium": "^0.10.1",
     "react": "^0.13.1",
     "react-animate": "^1.2.0",
     "react-router": "^0.13.2",

@@ -14,7 +14,8 @@ module.exports = {
     },
     sass: {
         src: src + "/client/sass/**.scss",
-        dest: wwwDest
+        dest: wwwDest,
+        errLogToConsole: true
     },
     webpack: {
         src: dest + "/js/",

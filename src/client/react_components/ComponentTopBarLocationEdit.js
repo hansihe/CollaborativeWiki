@@ -1,43 +1,54 @@
 var React = require('react');
+var MixinNavigationUtil = require('./MixinNavigationUtil');
 
-var LocationEdit = React.createClass({
+var ComponentTextEdit = React.createClass({
     getInitialState: function() {
         return {
-            location: this.props.location
+            value: this.props.value
         }
     },
 
     render: function() {
-        console.log(this.state.location);
         return (
-            <div className="page-nav-container">
-                <input type="text" className="page-nav" 
-                    value={this.state.location}
-                    onBlur={this.revertValue}
-                    onChange={this.handleChange}
-                    onKeyDown={this.handleKeyDown}/>
-            </div>
+            <input type="text" className={this.props.className}
+                value={this.state.value}
+                onBlur={this.revertValue}
+                onChange={this.handleChange}
+                onKeyDown={this.handleKeyDown}/>
         );
     },
     componentWillReceiveProps: function(nextProps) {
         this.setState({
-            location: nextProps.location
+            value: nextProps.value
         });
     },
     revertValue: function() {
         this.setState({
-            location: this.props.location
+            value: this.props.value
         });
     },
     handleChange: function(event) {
         this.setState({
-            location: event.target.value
-        })
+            value: event.target.value
+        });
     },
     handleKeyDown: function(event) {
         if (event.keyCode == 13) {
-            this.props.navigationCallback(this.state.location);
+            this.props.submit(this.state.value);
         }
+    }
+});
+
+var LocationEdit = React.createClass({
+    mixins: [MixinNavigationUtil],
+
+    render: function() {
+        return (
+            <div className="page-nav-container">
+                <ComponentTextEdit value={this.getWikiLocation()} className="page-nav"
+                    submit={(value) => {this.navigateToWikiPage(value)}}/>
+            </div>
+        );
     }
 });
 

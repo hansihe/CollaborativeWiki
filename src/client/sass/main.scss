@@ -1,4 +1,5 @@
 @import "normalize";
+@import "grid";
 
 html, body {
     padding: 0;
@@ -34,11 +35,19 @@ $nav-padding: 6px;
     }
 }
 
+@mixin action-box() {
+    background-color: #dddddd;
+    color: #222222;
+    border-radius: 2px;
+}
+
 .top-bar {
     width: 100%;
     height: $header-height;
 
-    background-color: #3F51B5;
+    //background-color: #3F51B5;
+    background-color: #f0f0f0;
+    border-bottom: solid 1px #ddd;
 
     .page-nav-container {
         float: left;
@@ -56,7 +65,8 @@ $nav-padding: 6px;
             font-size: 1.2em;
             font-weight: bold;
 
-            color: #303f9f;
+            //color: #303f9f;
+            color: #6e0000;
 
             pointer-events: none;
         }
@@ -71,17 +81,37 @@ $nav-padding: 6px;
 
             font-size: 1em;
 
-            background-color: #5C6BC0;
-            color: #ffffff;
+            //background-color: #5C6BC0;
+            background-color: #dddddd;
+            //color: #ffffff;
+            color: #222222;
             border-radius: 2px;
 
             transition: box-shadow .2s ease;
 
             &:focus {
-                box-shadow: 2px 2px 0 #3949AB;
+                //box-shadow: 2px 2px 0 #3949AB;
+                box-shadow: 1px 1px 1px #cccccc;
                 outline: none;
             }
+        }
+    }
 
+    .edit-button-container {
+        float: left;
+        padding: $nav-padding;
+        padding-left: 0;
+
+        .edit-button {
+            height: $header-height - ($nav-padding * 2);
+            line-height: $header-height - ($nav-padding * 2);
+            padding: 0 10px;
+            border: 0;
+            @include action-box();
+
+            &.active {
+                background-color: #bbbbbb;
+            }
         }
     }
 
@@ -92,6 +122,15 @@ $nav-padding: 6px;
 
 }
 
+.document-view-standalone-container {
+    overflow-y: scroll;
+    height: 100%;
+    @include container();
+
+    .text-container {
+        @include column(12);
+    }
+}
 
 .connection-status {
     position: relative;
