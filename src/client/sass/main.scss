@@ -1,5 +1,4 @@
 @import "normalize";
-@import "grid";
 
 html, body {
     padding: 0;
@@ -107,6 +106,7 @@ $nav-padding: 6px;
             line-height: $header-height - ($nav-padding * 2);
             padding: 0 10px;
             border: 0;
+            outline: none;
             @include action-box();
 
             &.active {
@@ -125,10 +125,20 @@ $nav-padding: 6px;
 .document-view-standalone-container {
     overflow-y: scroll;
     height: 100%;
-    @include container();
 
     .text-container {
-        @include column(12);
+        display: flex;
+        justify-content: center;
+
+        .markdown-container {
+            width: 100%;
+            margin-top: 10px;
+            @media screen and (min-width: 740px) {
+                width: 640px;
+                padding: 10px;
+                background-color: #fafafa;
+            }
+        }
     }
 }
 
