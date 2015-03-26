@@ -122,46 +122,7 @@ $nav-padding: 6px;
 
 }
 
-.document-view-standalone-container {
-    overflow-y: scroll;
-    height: 100%;
-
-    .text-container {
-        display: flex;
-        justify-content: center;
-
-        .markdown-container {
-            width: 100%;
-            margin-top: 10px;
-            @media screen and (min-width: 740px) {
-                width: 640px;
-                padding: 10px;
-                background-color: #fafafa;
-            }
-        }
-    }
-}
-
-.connection-status {
-    position: relative;
-    height: $header-height;
-    width: $header-height - 10;
-
-    .icon {
-        font-size: 1.5em;
-        position: absolute;
-        top: 13px;
-        left: 6px;
-
-        &.green {
-            color: #4CAF50;
-        }
-        &.red {
-            color: #F44336;
-        }
-    }
-}
-
+// Markdown styles
 .markdown-container {
     // Table styles are nicked from https://github.com/yahoo/pure
     // (MIT License)
@@ -192,6 +153,10 @@ $nav-padding: 6px;
         }
     }
 }
+
+/* start */
+@import "_inline_styles";
+/* end */
 
 $gray6: #333;
 $gray5: #555;

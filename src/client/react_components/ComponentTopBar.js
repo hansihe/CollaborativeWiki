@@ -8,6 +8,28 @@ var MixinNavigationUtil = require('./MixinNavigationUtil');
 var TopBarLocationEditComponent = require('./ComponentTopBarLocationEdit');
 var ComponentEditButton = require('./ComponentEditButton');
 
+/*scss*
+    .connection-status {
+        position: relative;
+        height: $header-height;
+        width: $header-height - 10;
+
+        .icon {
+            font-size: 1.5em;
+            position: absolute;
+            top: 13px;
+            left: 6px;
+
+            &.green {
+                color: #4CAF50;
+            }
+            &.red {
+                color: #F44336;
+            }
+        }
+    }
+ *scss*/
+
 var ConnectionStatusComponent = React.createClass({
     render: function() {
         return (

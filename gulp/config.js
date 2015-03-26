@@ -15,7 +15,10 @@ module.exports = {
     sass: {
         src: src + "/client/sass/**.scss",
         dest: wwwDest,
-        errLogToConsole: true
+        errLogToConsole: true,
+        includePaths: [dest],
+        style_scan_path: src + "/client",
+        style_temp: dest
     },
     webpack: {
         src: dest + "/js/",

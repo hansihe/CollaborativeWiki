@@ -1,6 +1,12 @@
 var React = require('react');
 var MixinNavigationUtil = require('./MixinNavigationUtil');
 
+/*scss*
+
+
+
+ *scss*/
+
 var ComponentEditButton = React.createClass({
     mixins: [MixinNavigationUtil],
 
