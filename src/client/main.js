@@ -18,7 +18,8 @@ Server:
  */
 
 
-// var PrimusClient = require('./primusClient');
+var PrimusClient = require('./primusClient');
+console.log(PrimusClient);
 
 var ReactRouter = require('react-router');
 var Route = ReactRouter.Route;

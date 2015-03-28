@@ -9,6 +9,8 @@ var _ = require('../shared/underscore');
 var session = require('express-session');
 var uuid = require('node-uuid');
 
+var primusFactory = require('../shared/primus');
+
 exports.makeServer = function(config) {
     var app = express();
     var httpServer = http.Server(app);
@@ -32,9 +34,14 @@ exports.makeServer = function(config) {
     });
 
     var sock = shoe(function(s) {
-        new ConnectionState(s);
+        //new ConnectionState(s);
     });
     sock.install(httpServer, '/endpoint');
+
+    var primus = primusFactory.makeServer(httpServer);
+    primus.on('connection', function(spark) {
+        new ConnectionState(s);
+    });
 
     return httpServer;
 };
