@@ -10,15 +10,16 @@ var thisify = require('../../shared/thisify');
  * before actually doing anything.
  * @constructor
  */
-function DocumentClientManager(stateManager) {
+function DocumentClientManager(state) {
     this.clients = {};
     this.clientReferences = {};
 
-    this.stateManager = stateManager;
+    this.state = state;
+
     this.connected = false;
 
-    this.stateManager.on('networkReady', thisify(this._networkConnected, this));
-    this.stateManager.on('networkDisconnected', thisify(this._networkDisconnected, this));
+    state.rpcRemote.subscribe((rpc) => this._networkConnected(rpc));
+    state.socketClose.subscribe(() => this._networkDisconnected());
 }
 
 function getClient(manager, documentId) {
@@ -31,20 +32,20 @@ function getClient(manager, documentId) {
 
 DocumentClientManager.prototype.incomingServerDocumentMessage = function(message) {
     var documentId = message.id;
-    console.log(message);
     var client = getClient(this, documentId);
-    client.inMessage.emit(message);
+    client.inMessageO.onNext(message);
 };
 
 /**
  * Called by the onReady event on the stateManager.
  * @private
  */
-DocumentClientManager.prototype._networkConnected = function() {
+DocumentClientManager.prototype._networkConnected = function(rpc) {
     this.connected = true;
+    this.rpc = rpc;
 
     _.forIn(this.clients, function(value) {
-        value.onConnected();
+        value.onConnected(rpc);
     }, this);
 };
 
@@ -66,7 +67,7 @@ DocumentClientManager.prototype.isConnected = function() {
 
 /**
  * Fetches/makes the DocumentClient for the supplied id.
- * Make sure to always call destroyClient when you are done with it.
+ * Make sure to always call releaseClient when you are done with it.
  * When all owners have destroyed their clients, the DocumentClient might be destroyed (for real, disconnected, bye bye).
  * @param owner A unique object that will be treated as the owner of the DocumentClient. Used for reference tracking,
  * you will need to supply the same instance when you are done with the DocumentCLient.
@@ -83,9 +84,9 @@ DocumentClientManager.prototype.requestClient = function(owner, id) {
         return this.clients[id];
     }
 
-    var client = new DocumentClient(this.stateManager, this, id);
+    var client = new DocumentClient(this.state, this, id);
     if (this.isConnected()) {
-        client.onConnected();
+        client.onConnected(this.rpc);
     }
 
     this.clients[id] = client;
@@ -106,7 +107,7 @@ DocumentClientManager.prototype.requestClient = function(owner, id) {
  * reference counting, there are no requirements of properties of the object.
  * @param client The client returned by requestClient that you want to destroy.
  */
-DocumentClientManager.prototype.destroyClient = function(owner, client) {
+DocumentClientManager.prototype.releaseClient = function(owner, client) {
     var documentId = client.id;
 
     // We want to be able to call this even though we might not have called requestClient yet

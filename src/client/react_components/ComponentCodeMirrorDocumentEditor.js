@@ -34,6 +34,8 @@ var CodeMirrorDocumentEditor = React.createClass({
 
     componentWillMount: function() {
         this.setState({documentId: this.props.documentId});
+
+
     },
     componentWillReceiveProps: function(nextProps) {
         this.setState({documentId: nextProps.documentId});
@@ -50,7 +52,24 @@ var CodeMirrorDocumentEditor = React.createClass({
      * @param documentClient
      */
     setDocumentClientOnEditor: function(editor, documentClient) {
-        documentClient.text && editor.setValue(documentClient.text);
+        //documentClient.initialState.map(() => documentClient.text.getValue()).subscribe(text => editor.setValue(text));
+
+        var replaceText = new Rx.Subject();
+        var operationSkip = new Rx.Subject();
+        var editorOperation = new Rx.Subject();
+        //Rx.Observable.repeat().flatMap(() => editorOperation.takeUntil(operationSkip).skip(1)).subscribe(operation => console.log(operation));
+        
+        //var skipNum = 0;
+        //operationSkip.subscribe(num => skipNum += (num || 1));
+        editorOperation.subscribe(operation => documentClient.performClientOperation(operation));
+        //editorOperation.filter(() => skipNum == 0).subscribe(operation => { console.log(operation)});
+        //editorOperation.subscribe(() => {if(skipNum > 0) {skipNum -= 1}});
+        
+        replaceText.subscribe(operationSkip);
+        replaceText.subscribe(text => editor.setValue(text));
+
+        documentClient.textReplace.subscribe(replaceText);
+        replaceText.onNext(documentClient.text.getValue());
 
         this.editorDocumentAdapter = new CodeMirrorAdapter(editor);
         this.editorDocumentSelectionManager = new CodeMirrorUserSelectionManager(editor);
@@ -61,7 +80,8 @@ var CodeMirrorDocumentEditor = React.createClass({
 
         this.editorDocumentAdapter.registerCallbacks({
             change: function(operation, inverse) {
-                documentClient.performClientOperation(operation);
+                editorOperation.onNext(operation);
+                //documentClient.performClientOperation(operation);
             },
             selectionChange: function() {
                 var otSelections = [];
@@ -85,8 +105,9 @@ var CodeMirrorDocumentEditor = React.createClass({
     },
 
     attachDocumentListeners: function() {
-        this.document.serverOperationEvent.on(this.onApplyOperation);
-        this.document.selectionsChangeEvent.on(this.onSelectionsChange);
+        //this.document.serverOperationEvent.on(this.onApplyOperation);
+        //this.document.selectionsChangeEvent.on(this.onSelectionsChange);
+        // TODO
     },
     initialStateReceived: function() {
         this.setDocumentClientOnEditor(this.editor, this.document);

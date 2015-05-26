@@ -36,13 +36,16 @@ var DocumentRenderer = React.createClass({
     },
 
     attachDocumentListeners: function() {
-        this.document.documentChangeEvent.on(this.onDocumentChange);
+        //this.document.documentChangeEvent.on(this.onDocumentChange);
+        // TODO
+        this.document.text.subscribe(text => this.setMarkdown(text));
     },
     initialStateReceived: function() {
-        this.setMarkdown(this.document.text);
+        //this.setMarkdown(this.document.text);
     },
     detachDocumentListeners: function() {
-        this.document.documentChangeEvent.off(this.onDocumentChange);
+        //this.document.documentChangeEvent.off(this.onDocumentChange);
+        // TODO
     }
 });
 

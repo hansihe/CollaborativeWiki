@@ -52,10 +52,13 @@ module.exports = {
     },
     transform: {
         src: src + "/**/*.js",
-        dest: dest + "/js"
+        dest: dest + "/js",
+        config: {
+            //optional: ["runtime"]
+        }
     },
     test: {
-        src: dest + "/js",
+        src: dest + "/js/test/test.js",
         options: {
             testPathIgnorePatterns: [
                 "node_modules"

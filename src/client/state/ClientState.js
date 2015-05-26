@@ -5,6 +5,7 @@ var shoe = require('reconnect-shoe');
 var thisify = require('../../shared/thisify');
 var _ = require('../../shared/underscore');
 var ot = require('ot');
+var dnode = require('dnode');
 
 function rewireEvent(source, type, destination, destinationType) {
     destinationType = destinationType || type;
@@ -28,15 +29,22 @@ function ClientState() {
 
     this.documentClientManager = new DocumentClientManager(this);
 
-    this.networkChannel = new NetworkChannel({
+//    this.networkChannel = new NetworkChannel({
+//        // RPC
+//        documentMessage: function(message) {
+//            clientStateThis.documentClientManager.incomingServerDocumentMessage(message);
+//        }
+//    });
+
+    this.rpc = dnode({
         // RPC
         documentMessage: function(message) {
             clientStateThis.documentClientManager.incomingServerDocumentMessage(message);
         }
     });
 
-    rewireEvent(this.networkChannel, 'connected', this, 'networkConnected');
-    rewireEvent(this.networkChannel, 'disconnected', this, 'networkDisconnected');
+//    rewireEvent(this.networkChannel, 'connected', this, 'networkConnected');
+//    rewireEvent(this.networkChannel, 'disconnected', this, 'networkDisconnected');
 
     this.on('networkConnected', thisify(this._onNetworkConnected, this));
     this.on('networkReady', thisify(this._onNetworkReady, this));
@@ -52,7 +60,8 @@ _.extend(ClientState.prototype, EventEmitter.prototype);
 ClientState.prototype._onNetworkConnected = function() {
     console.log('connect');
 
-    this.networkChannel.rpcRemote.handshake(thisify(this.handshakeCallback, this));
+//    this.networkChannel.rpcRemote.handshake(thisify(this.handshakeCallback, this));
+    //this.rpc.on('remote', thisify(this._onNetworkConnected, this));
 };
 
 /**
@@ -73,6 +82,7 @@ ClientState.prototype.handshakeCallback = function(userId) {
  */
 ClientState.prototype._onNetworkReady = function() {
     console.log('ready');
+this.rpc.handshake(thisify(this.handshakeCallback, this));
 };
 
 /**

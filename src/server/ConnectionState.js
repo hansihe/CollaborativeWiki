@@ -5,8 +5,13 @@ var _ = require('../shared/underscore');
 var uuid = require('node-uuid');
 var services = require('./serviceManager');
 var documentServerManager = require('./documentServerManager');
-
+var dnode = require('dnode');
+var util = require('../shared/util');
+var Rx = require('rx');
+require('rx-react');
 function ConnectionState(stream) {
+    var streamEndObservable = Rx.Observable.fromEvent(stream, 'end');
+
     var clientConnectionThis = this;
     EventEmitter.call(this);
 
@@ -17,7 +22,7 @@ function ConnectionState(stream) {
 
     clientConnectionThis.boundDocumentEventTransmitter = clientConnectionThis._documentEventTransmitter.bind(clientConnectionThis);
 
-    this.channel = new NetworkChannel(stream, {
+    var rpc = dnode({
         handshake: function(callback) {
             callback(clientConnectionThis.uuid);
         },
@@ -53,22 +58,50 @@ function ConnectionState(stream) {
                 return value === document;
             });
             document.localUserLeave(clientConnectionThis.uuid);
-        },
-        documentMessage: function(message) {
-            var documentId = message.id;
-            var document = documentServerManager.getDocumentServer(documentId);
-            message['sender'] = clientConnectionThis.uuid;
-            document.incomingUserDocumentMessage(message);
         }
     });
 
-    // Confirmed connection
-    this.channel.on('remote', function(remote) {
-        console.log("connected");
+    var rpcRemoteSubject = new Rx.BehaviorSubject();
+    Rx.Observable.fromEvent(rpc, 'remote').subscribe(rpcRemoteSubject);
 
+    var rpcStream = stream.substream('d');
+    util.dPipe(rpc, rpcStream);
+
+    this.documentMessageStream = stream.substream('dm');
+    this.documentMessageStream.on('data', function(message) {
+        var documentId = message.id;
+        var document = documentServerManager.getDocumentServer(documentId);
+        message.sender = clientConnectionThis.uuid;
+        document.incomingUserDocumentMessage(message);
     });
 
-    this.channel.on('end', function() {
+    var this_ = this;
+    this.dm2 = stream.substream('dm2');
+    this.dm2.on('data', function(message) {
+        let ext = message.type[0];
+        let endpoint = message.type[1];
+        console.log("InMessage", message);
+
+        switch (ext) {
+            case "initialState": {
+                switch (endpoint) {
+                    case "GET_INITIAL_STATE": {
+                        this_.dm2.write({
+                            type: ["initialState", "INITIAL_STATE"],
+                            msg: {
+                                woo: "test"
+                            },
+                            id: "noooo"
+                        });
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+    });
+    
+    stream.on('end', function() {
         console.log("disconnect");
         for (var i = 0; i < clientConnectionThis.joinedDocuments; i++) {
             var document = clientConnectionThis.joinedDocuments[i];
@@ -80,8 +113,7 @@ function ConnectionState(stream) {
 _.extend(ConnectionState.prototype, EventEmitter.prototype);
 
 ConnectionState.prototype._documentEventTransmitter = function(message) {
-    console.log(message);
-    this.channel.rpcRemote.documentMessage(message);
+    this.documentMessageStream.write(message);
 };
 
 module.exports = ConnectionState;

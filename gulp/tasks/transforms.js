@@ -6,7 +6,7 @@ var config = require('../config');
 gulp.task('transforms', function() {
     return gulp.src(config.transform.src)
         .pipe(sourceMaps.init())
-        .pipe(babel())
+        .pipe(babel(config.transform.config))
         .pipe(sourceMaps.write('./'))
         .pipe(gulp.dest(config.transform.dest));
 });

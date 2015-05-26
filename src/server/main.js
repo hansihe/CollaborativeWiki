@@ -40,7 +40,7 @@ exports.makeServer = function(config) {
 
     var primus = primusFactory.makeServer(httpServer);
     primus.on('connection', function(spark) {
-        new ConnectionState(s);
+        new ConnectionState(spark);
     });
 
     return httpServer;

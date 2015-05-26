@@ -5,6 +5,7 @@ var EventEmitter = require('events').EventEmitter;
 var EventEndpoint = require('../../shared/EventEndpoint').Endpoint;
 import OTClient from '../ot/OTClient';
 import ClientSelectionHelper from '../ot/ClientSelectionHelper';
+var Rx = require('rx');
 
 /**
  * The responsibility of the DocumentClient is to manage the state of a given Document.
@@ -14,41 +15,90 @@ import ClientSelectionHelper from '../ot/ClientSelectionHelper';
  * what you are doing.
  * @constructor
  */
-function DocumentClient(stateManager, documentClientManager, id) {
-    EventEmitter.call(this);
-
-    this.otClient = new OTClient();
-    this.otClient.sendOperation = (revision, operation) => this.sendOperation(revision, operation);
-    this.otClient.applyOperation = operation => this.applyOperation(operation);
+function DocumentClient(state, documentClientManager, id) {
+    this.state = state;
     
     this.handshaken = false;
-
     this.id = id;
 
-    this.text = null;
-    this.users = {};
+    this.destroyObservable = new Rx.Observable();
 
-    this.stateManager = stateManager;
-    this.manager = documentClientManager;
+    this.otClient = new OTClient();
+    this.otClient.sendOperation = (revision, operation) => {
+        this.outMessage.onNext({
+            'type': 'operation',
+            'operation': operation,
+            'revision': revision
+        });
+    };
 
-    // Fired when there is a change in the document on the client side (unconfirmed)
-    this.clientOperationEvent = new EventEndpoint(this, 'clientDocumentChange');
-    // Fired when there is a change in the document from the server (confirmed)
-    this.serverOperationEvent = new EventEndpoint(this, 'serverDocumentChange');
+    this.otClient.applyOperation = operation => this.clientOperation.onNext(operation);
+    // When a operation should be applied to the client text
+    this.clientOperation = new Rx.Subject();
+    this.clientOperation.subscribe(this.textOperationApply);
 
-    // Fired when there is any change at all in the document data
-    this.documentChangeEvent = new EventEndpoint(this, 'documentChange');
+    // When we have a new document body and should replace it without jerking around with operations
+    this.textReplace = new Rx.Subject();
+    this.textReplace.subscribe(text => this.text.onNext(text));
 
-    this.usersChangeEvent = new EventEndpoint(this, 'usersChange');
-    this.selectionsChangeEvent = new EventEndpoint(this, 'selectionsChange');
+    this.text = new Rx.BehaviorSubject("");
+    this.usersO = new Rx.BehaviorSubject({});
+    this.usersO.map(users => _.omit(users, this.state.connectionId.getValue())).subscribe(this.otherUsers);
+    this.otherUsers = new Rx.BehaviorSubject({});
 
-    this.outMessage = new EventEndpoint(this, 'outMessage');
-    this.inMessage = new EventEndpoint(this, 'inMessage');
+    // When a operation should be applied to the text
+    this.textOperationApply = new Rx.Subject();
+    this.textOperationApply.map(operation => operation.apply(this.text.getValue())).subscribe(this.text);
+    this.textOperationApply.subscribe(operation => this.transformSelections(operation));
 
-    this.outMessage.on(this.handleOutMessage.bind(this));
-    this.inMessage.on(this.handleInMessage.bind(this));
+    this.initialState = new Rx.ReplaySubject(1);
+
+    this.outMessage = new Rx.Subject(); // Messages out to server
+    this.state.documentMessageStreamSubject.subscribe(
+            stream => this.outMessage.takeUntil(this.state.documentMessageStreamSubject).subscribe(
+                message => {message.id = this.id; stream.onNext(message);}));
+
+    this.inMessageO = new Rx.Subject(); // Messages in from the server
+
+    var inOperations = this.inMessageO.filter(m => m.type == 'operation');
+    inOperations.subscribe(message => {
+        var operation = ot.TextOperation.fromJSON(message.operation);
+        if (message.sender == this.state.connectionId.getValue()) {
+            this.otClient.serverAck(operation);
+        } else {
+            this.otClient.applyServer(operation);
+        }
+    });
+
+    var inSelections = this.inMessageO.filter(m => m.type == 'selection');
+    inSelections.subscribe(message => {
+        let selections = message.selections;
+
+        if (this.outstanding) {
+            selections = ClientSelectionHelper.transformRanges(message.selections, this.outstanding);}
+        if (this.buffer) {
+            selections = ClientSelectionHelper.transformRanges(message.selections, this.buffer);}
+
+        var users = this.usersO.getValue();
+        users[message.sender].selections = selections;
+        this.usersO.onNext(users);
+    });
+
+    var userJoins = this.inMessageO.filter(m => m.type == 'user_join');
+    userJoins.subscribe(message => {
+        var users = this.usersO.getValue();
+        users[message.user] = {
+            selections: []
+        };
+        this.usersO.onNext(users);
+    });
+
+    var userLeaves = this.inMessageO.filter(m => m.type == 'user_leave');
+    userLeaves.subscribe(message => {
+        this.usersO.onNext(_.omit(this.usersO.getValue(), message.user));
+    });
 }
-_.extend(DocumentClient.prototype, EventEmitter.prototype, OTClient.prototype);
+//_.extend(DocumentClient.prototype, EventEmitter.prototype);
 
 /**
  * Called by the server as a callback from the RPC performed in DocumentClient.onConnected.
@@ -58,67 +108,28 @@ DocumentClient.prototype.channelInitCallback = function(success, revision, docum
     console.log("DocumentClient init success: ", success, " Revision: ", revision);
 
     this.otClient.revision = revision;
-    this.document = document;
     this.handshaken = true;
-    this.users = _.reduce(users, function(result, user) {
+    
+    var tUsers = _.reduce(users, function(result, user) {
         result[user] = {
             selections: []
         };
         return result;
     }, {});
+    this.usersO.onNext(tUsers);
 
-    this.text = document;
+    this.textReplace.onNext(document);
 
-    this.emit('remote');
-    this.emit('documentReplace', document);
-    this.documentChangeEvent.emit();
-    this.emit('initialState', this);
-};
-
-DocumentClient.prototype.handleInMessage = function(message) {
-    var type = message.type;
-    switch (type) {
-        case 'operation': {
-            var operation = ot.TextOperation.fromJSON(message.operation);
-            if (message.sender == this.stateManager.userId) {
-                this.otClient.serverAck(operation);
-            } else {
-                this.otClient.applyServer(operation);
-            }
-            break;
-        }
-        case 'selection': {
-            let selections = message.selections;
-
-            if (this.outstanding) {
-                selections = ClientSelectionHelper.transformRanges(message.selections, this.outstanding);}
-            if (this.buffer) {
-                selections = ClientSelectionHelper.transformRanges(message.selections, this.buffer);}
-
-            this.users[message.sender] = {
-                selections: selections
-            };
-            this.selectionsChangeEvent.emit();
-            break;
-        }
-        case 'user_join': {
-            this.users[message.user] = {
-                selections: []
-            };
-            this.usersChangeEvent.emit();
-            break;
-        }
-        case 'user_leave': {
-            delete this.users[message.user];
-            this.usersChangeEvent.emit();
-            break;
-        }
-    }
+    //this.emit('remote');
+    //this.emit('documentReplace', document);
+    //this.documentChangeEvent.emit();
+    //this.emit('initialState', this);
+    this.initialState.onNext(this);
 };
 
 DocumentClient.prototype.handleOutMessage = function(message) {
     message.id = this.id;
-    this.stateManager.networkChannel.rpcRemote.documentMessage(message);
+    this.rpc.documentMessage(message);
 };
 
 /**
@@ -130,12 +141,11 @@ DocumentClient.prototype.getInitialState = function(callback) {
     var documentClientThis = this;
     if (this.isConnected()) {
         callback(this);
-        return function() {}
+        return function() {};
     } else {
-        this.once('initialState', callback);
-        return function() {
-            documentClientThis.removeListener('initialState', callback);
-        }
+        var endS = new Rx.Subject();
+        this.initialState.takeUntil(endS).first().subscribe(callback);
+        return () => endS.onNext();
     }
 };
 
@@ -146,7 +156,7 @@ DocumentClient.prototype.getInitialState = function(callback) {
  * Should NOT be called by anything other than DocumentClientManager.destroyClient under normal circumstances.
  */
 DocumentClient.prototype.destroyDocument = function() {
-    this.stateManager.networkChannel.rpcRemote.disconnectDocument(this.id);
+    this.rpc.disconnectDocument(this.id);
 };
 
 /**
@@ -154,11 +164,7 @@ DocumentClient.prototype.destroyDocument = function() {
  * Updates the document, performs various OT magics, and transmits to the server.
  */
 DocumentClient.prototype.performClientOperation = function(operation) {
-    this.text = operation.apply(this.text);
-    this.documentChangeEvent.emit();
-
-    this.transformSelections(operation);
-
+    this.textOperationApply.onNext(operation);
     this.otClient.applyClient(operation);
 };
 
@@ -167,14 +173,10 @@ DocumentClient.prototype.performClientOperation = function(operation) {
  * Transmits the new state to the server.
  */
 DocumentClient.prototype.performSelection = function(selection) {
-    this.outMessage.emit({
+    this.outMessage.onNext({
         'type': 'selection',
         'selections': selection
     });
-};
-
-DocumentClient.prototype.getOtherUsers = function() {
-    return _.omit(this.users, this.stateManager.userId);
 };
 
 DocumentClient.prototype.isConnected = function() {
@@ -187,7 +189,7 @@ DocumentClient.prototype.isConnected = function() {
  */
 DocumentClient.prototype.onDisconnected = function() {
     this.handshaken = false;
-    this.emit('end');
+    //this.emit('end');
     // TODO
 };
 
@@ -196,42 +198,17 @@ DocumentClient.prototype.onDisconnected = function() {
  * Performs a RPC with callback DocumentClient.channelInitCallback asking for information needed to start
  * the DocumentClient.
  */
-DocumentClient.prototype.onConnected = function() {
-    this.stateManager.networkChannel.rpcRemote.initDocumentChannel(this.id, thisify(this.channelInitCallback, this));
-};
-
-/**
- * Called by ot.Client when we should transmit a operation to the server.
- */
-DocumentClient.prototype.sendOperation = function(revision, operation) {
-    //this.text = operation.apply(this.text);
-    //this.documentChangeEvent.emit();
-
-    this.outMessage.emit({
-        'type': 'operation',
-        'operation': operation,
-        'revision': revision
-    });
-};
-
-/**
- * Called by ot.Client when we should apply a operation to the editor.
- * Gets published on the DocumentClient's event bus, 'applyOperation'.
- */
-DocumentClient.prototype.applyOperation = function(operation) {
-    this.text = operation.apply(this.text);
-    this.documentChangeEvent.emit();
-
-    this.transformSelections(operation);
-
-    this.serverOperationEvent.emit(operation);
+DocumentClient.prototype.onConnected = function(rpc) {
+    this.rpc = rpc;
+    rpc.initDocumentChannel(this.id, thisify(this.channelInitCallback, this));
 };
 
 DocumentClient.prototype.transformSelections = function(operation) {
-    _.map(this.users, function(value, key, object) {
-        object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
-    });
-    this.selectionsChangeEvent.emit();
+    //_.map(this.usersO.getValue(), function(value, key, object) {
+    //    object[key].selections = ClientSelectionHelper.transformRanges(value.selections, operation);
+    //});
+    //this.selectionsChangeEvent.emit();
+    // TODO
 };
 
 module.exports = DocumentClient;

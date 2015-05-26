@@ -8,6 +8,8 @@ var MixinNavigationUtil = require('./MixinNavigationUtil');
 var TopBarLocationEditComponent = require('./ComponentTopBarLocationEdit');
 var ComponentEditButton = require('./ComponentEditButton');
 
+var RxLifecycleMixin = require('./mixin/RxLivecycleMixin.js');
+
 /*scss*
     .connection-status {
         position: relative;
@@ -31,10 +33,22 @@ var ComponentEditButton = require('./ComponentEditButton');
  *scss*/
 
 var ConnectionStatusComponent = React.createClass({
+    mixins: [RxLifecycleMixin],
+    contextTypes: {
+        applicationState: React.PropTypes.object
+    },
+
+    componentWillMount: function() {
+        console.log(this);
+//        this.rxLifecycle.componentWillUpdate.subscribe(() => console.log("Woohoo, output"));
+        this.context.applicationState.connectionStatus.subscribe(state => this.setState({state: state}));
+    },
+
     render: function() {
+        var color = this.state.state ? "green" : "red";
         return (
             <div className="connection-status">
-                <div className="icon icon-flash green"></div>
+                <div className={"icon icon-flash "+color}></div>
             </div>
         );
     }

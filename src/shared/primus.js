@@ -1,5 +1,6 @@
 let Primus = require("primus");
 let EventEmitter = require("events").EventEmitter;
+let SubStream = require("substream");
 
 let config = {
     pathname: "/socket",
@@ -8,6 +9,7 @@ let config = {
 
 export function makeServer(server) {
     let instance = new Primus(server, config);
+    instance.use('substream', SubStream);
     return instance;
 };
 

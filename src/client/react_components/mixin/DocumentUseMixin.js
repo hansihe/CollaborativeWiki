@@ -2,27 +2,25 @@ var React = require('react');
 var services = require('../../state/serviceManager');
 
 var DocumentUseMixin = {
+    contextTypes: {
+        documentClientManager: React.PropTypes.object
+    },
+
     _mountDocument: function(documentId) {
-        if (this.document) {
-            throw "error";
-        }
-        var _this = this;
-        this.document = services.stateManager.documentClientManager.requestClient(this, documentId);
-        this.cancelStateCallback = this.document.getInitialState(function() {
-            _this.initialStateReceived();
-        });
+        if (this.document) {throw "error";}
+
+        this.document = this.context.documentClientManager.requestClient(this, documentId);
+        this.useEnd = new Rx.Subject();
+        this.document.initialState.takeUntil(this.useEnd).subscribe(() => this.initialStateReceived());
         this.attachDocumentListeners();
     },
+
     _unmountDocument: function() {
-        if (!this.document) {
-            throw "error";
-        }
-        if (this.cancelStateCallback) {
-            this.cancelStateCallback();
-            delete this.cancelStateCallback;
-        }
+        if (!this.document) {throw "error";}
+        this.useEnd.onNext();
+
         this.detachDocumentListeners();
-        services.stateManager.documentClientManager.destroyClient(this, this.document);
+        this.context.documentClientManager.releaseClient(this, this.document);
         delete this.document;
     },
 
