@@ -5,7 +5,7 @@ var PrimusClient = require('./primusClient');
 
 var Constants = require('./Constants');
 
-class SocketActionsClass extends Marty.ActionCreators {
+export class SocketActions extends Marty.ActionCreators {
     socketOpen() {
         this.dispatch(Constants.SOCKET_OPEN);
     }
@@ -31,9 +31,8 @@ class SocketActionsClass extends Marty.ActionCreators {
         this.dispatch(Constants.RPC_REMOTE, remote);
     }
 }
-var SocketActions = Marty.register(SocketActionsClass);
 
-class SocketStateSource extends Marty.StateSource {
+export default class SocketStateSource extends Marty.StateSource {
     constructor(options) {
         super(options);
 
@@ -49,27 +48,27 @@ class SocketStateSource extends Marty.StateSource {
     }
 
     socketOpen() {
-        SocketActions.socketOpen();
+        this.app.socketSourceActions.socketOpen();
 
         this.rpc = dnode({});
         this.rpc.on('data', this.sendRpcMessage.bind(this));
         this.rpc.on('remote', this.onRpcRemote.bind(this));
     }
     socketClose() {
-        SocketActions.socketClose();
+        this.app.socketSourceActions.socketClose();
 
         this.rpc = null;
     }
 
     onRpcRemote(remote) {
-        SocketActions.rpcRemote(remote);
+        this.app.socketSourceActions.rpcRemote(remote);
     }
 
     recvDocumentMessage(message) {
-        SocketActions.recvDocumentMessage(message);
+        this.app.socketSourceActions.recvDocumentMessage(message);
     }
     recvRpcMessage(message) {
-        SocketActions.recvRpcMessage(message);
+        this.app.socketSourceActions.recvRpcMessage(message);
         if (this.rpc) {
             this.rpc.write(message);
         }
@@ -84,5 +83,3 @@ class SocketStateSource extends Marty.StateSource {
         //SocketActions.sendRpcMessage(message);
     }
 }
-
-export default Marty.register(SocketStateSource);

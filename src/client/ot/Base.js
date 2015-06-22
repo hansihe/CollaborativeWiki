@@ -5,6 +5,12 @@ export function makeEvents(name, events) {
     return _.zipObject(events, _.map(events, event => name + '_' + event));
 }
 
+var currentLUID = 0;
+function getLUID() {
+    currentLUID += 1;
+    return currentLUID;
+}
+
 export class BaseExtension {
     constructor(base) {
         this.name = this.constructor.getName();
@@ -21,15 +27,17 @@ export class BaseExtension {
         throw "No name defined";
     }
     
-    dispatch(event, ...data) {
-        this.base.dispatch(event, data);
+    dispatch(event, data, documentId) {
+        this.base.dispatch(event, data, documentId);
     }
     bindEvent(event, method) {
         if (event === undefined) {
             throw "cannot bind to undefined";
         }
-        this.base.eventHub.on(event, 
-                data => method.apply(this, data));
+        return this.base.onEvent(event, method.bind(this));
+    }
+    offEvent(listenerId) {
+        this.base.offEvent(listenerId);
     }
 }
 
@@ -41,14 +49,37 @@ export class BaseDocumentSync {
         this.events = {};
         this.methods = {};
 
+        this._listeners = {};
+
         if (extensions !== undefined) {
             this.registerExtensions(extensions);
         }
     }
 
-    dispatch(event, data) {
-        console.log("Base Event: ", event, data);
-        this.eventHub.emit(event, data);
+    dispatch(event, data, documentId) {
+        console.log("Base Event: ", event, data, documentId);
+        this.eventHub.emit(event, {
+            data: data,
+            documentId: documentId
+        });
+    }
+    onEvent(event, listener) {
+        let func = ({data, documentId}) => {
+            listener(data, documentId);
+        };
+
+        let listenerId = getLUID();
+        this._listeners[listenerId] = [event, func];
+
+        this.eventHub.on(event, func);
+
+        return listenerId;
+    }
+    offEvent(listenerId) {
+        let [event, func] = this._listeners[listenerId];
+        this._listeners[listenerId] = undefined;
+
+        this.eventHub.removeListener(event, func);
     }
 
     registerExtensions(extensions) {

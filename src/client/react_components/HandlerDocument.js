@@ -10,18 +10,13 @@ var UserBarComponent = require('./ComponentUsersSideBar');
 
 var services = require('../state/serviceManager');
 
-var Reflux = require('reflux');
-var UIStateStore = require('../state/stores/UIState');
+var { DocumentUse } = require('./ContainerDocument');
 
 var DocumentEditComponent = React.createClass({
-    mixins: [ReactRouter.State, Reflux.ListenerMixin],
-    getInitialState: function() {
-        return {
-            v: true
-        };
-    },
+    mixins: [ReactRouter.State],
 
-    render: function() {
+    render() {
+        console.log("render");
         var documentId = this.getParams().documentId || 'index';
         return (
             <div
@@ -31,22 +26,12 @@ var DocumentEditComponent = React.createClass({
             </div>
         );
     },
-    componentWillMount: function() {
-        this.listenTo(UIStateStore.store, this.onUIStateChange);
-        this.setState({
-            uiState: UIStateStore.store.state
-        });
+    componentDidMount() {
+        console.log("mount");
     },
-    onUIStateChange: function(state) {
-        this.setState({
-            uiState: state
-        });
-    },
-    test: function() {
-        this.setState({
-            v: !this.state.v
-        });
+    componentWillUnmount() {
+        console.log("unmount");
     }
 });
 
-module.exports = DocumentEditComponent;
+module.exports = DocumentUse(DocumentEditComponent);

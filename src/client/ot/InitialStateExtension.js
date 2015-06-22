@@ -14,21 +14,11 @@ export class InitialStateExtension extends ClientExtension {
     constructor(base) {
         super(base);
 
-        this.bindEvent(this.allEvents.base.CONNECTION_ESTABLISHED,
-                this.connectionEstablished);
         this.bindMessage('INITIAL_STATE',
                 this.initialStateReceived);
     }
 
-    connectionEstablished() {
-        let documents = this.getDocuments();
-
-        _.each(documents, (id) => {
-            this.sendMessage('GET_INITIAL_STATE', undefined, id);
-        });
-    }
-
     initialStateReceived(data, id) {
-        console.log(arguments);
+        this.dispatch(this.events.INITIAL_STATE_RECEIVED, data, id);
     }
 }

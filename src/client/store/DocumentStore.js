@@ -10,16 +10,18 @@ var SocketStateSource = require('../SocketStateSource');
 
 var { ClientExtension, ClientDocumentSync } = require('../ot/Client');
 var { InitialStateExtension } = require('../ot/InitialStateExtension');
+var { DocumentHandleExtension } = require('../ot/DocumentHandleExtension');
+var { OTExtension } = require('../ot/OTExtension');
 
 class DocumentSyncManager extends ClientDocumentSync {
     constructor(store) {
-        super([InitialStateExtension]);
+        super([InitialStateExtension, DocumentHandleExtension, OTExtension]);
         this.store = store;
     }
 
     sendMessage(message) {
         console.log("OutDocMessage", message);
-        SocketStateSource.sendDocumentMessage(message);
+        this.store.app.socketSource.sendDocumentMessage(message);
     }
 
     getDocumentState(id) {
@@ -30,7 +32,7 @@ class DocumentSyncManager extends ClientDocumentSync {
         return this.store.state.documents[id];
     }
     getDocuments() {
-        return _.keys(this.store.state);
+        return _.keys(this.store.state.documents);
     }
 }
 
@@ -47,6 +49,9 @@ class DocumentStore extends Marty.Store {
         };
         
         this.documentSync = new DocumentSyncManager(this);
+        console.log(this.documentSync);
+
+        var test = this.documentSync.methods.documentHandle.getHandle("test");
     }
 
     onConnected() {
@@ -60,6 +65,10 @@ class DocumentStore extends Marty.Store {
     recvMessage(message) {
         console.log("InDocMessage", message);
         this.documentSync.recvMessage(message);
+    }
+
+    getDocumentHandle(name) {
+        return this.documentSync.methods.documentHandle.getHandle(name);
     }
 }
 
@@ -104,4 +113,4 @@ class DocumentStore extends Marty.Store {
 //    }
 //}
 
-export default Marty.register(DocumentStore);
+export default DocumentStore;

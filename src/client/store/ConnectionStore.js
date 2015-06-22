@@ -27,11 +27,14 @@ class ConnectionStore extends Marty.Store {
     }
 
     rpcRemote(remote) {
-        console.log(ConnectionStatus);
         this.state.status = ConnectionStatus.CONNECTED;
         this.state.rpcRemote = remote;
         this.hasChanged();
     }
+    
+    getConnectionStatus() {
+        return this.state.status;
+    }
 }
 
-export default Marty.register(ConnectionStore);
+export default ConnectionStore;

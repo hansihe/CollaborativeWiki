@@ -30,20 +30,24 @@ var services = require('../state/serviceManager');
     }
  *scss*/
 
-var DocumentViewComponent = React.createClass({
-    mixins: [ReactRouter.State],
+class DocumentViewComponent extends React.Component {
+    constructor(props, context) {
+        super(props, context);
+    }
 
-    render: function() {
-        var documentId = this.getParams().documentId || 'index';
+    render() {
         return (
             <div className="document-view-standalone-container">
                 <div className="text-container">
                     <DocumentRendererComponent
-                        documentId={documentId}/>
+                        documentHandle={this.context.documentHandle}/>
                 </div>
             </div>
         );
     }
-});
+}
+DocumentViewComponent.contextTypes = {
+    documentHandle: React.PropTypes.object
+};
 
 module.exports = DocumentViewComponent;

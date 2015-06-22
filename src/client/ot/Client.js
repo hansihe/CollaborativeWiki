@@ -1,37 +1,29 @@
 var { BaseExtension, BaseDocumentSync, makeEvents } = require('./Base');
 
 export class ClientExtension extends BaseExtension {
+    constructor(base) {
+        super(base);
+    }
     sendMessage(type, message, documentId) {
         let packet = {
             type: [this.name, type],
-            msg: message,
-            id: documentId
+            msg: message
         };
-        this.dispatch(this.allEvents.base.SEND_MESSAGE, packet);
+        this.dispatch(this.allEvents.base.SEND_MESSAGE, packet, documentId);
     }
     bindMessage(type, method) {
-        this.bindEvent(this.allEvents.base.RECV_MESSAGE,
-                ([ext, t], msg, id) => {
-                    if (ext === this.name && t === type) {
-                        method.call(this, msg, id);
-                    }
-                });
+        this.bindEvent(this.allEvents.base.RECV_MESSAGE, (data, documentId) => {
+            let [typeExt, typeName] = data.type;
+            if (typeExt == this.name && typeName == type) {
+                method.call(this, data.msg, documentId);
+            }
+        });
     }
     getDocumentState(id) {
         return this.base.getDocumentState(id);
     }
     getDocuments() {
         return this.base.getDocuments();
-    }
-}
-
-class DocumentHandle {
-    constructor(documentSync, id) {
-
-    }
-
-    release() {
-
     }
 }
 
@@ -42,12 +34,15 @@ export class ClientDocumentSync extends BaseDocumentSync {
             'SEND_MESSAGE',
             'RECV_MESSAGE',
             'CONNECTION_ESTABLISHED',
-            'CONNECTION_LOST'
+            'CONNECTION_LOST',
+            'INIT_DOCUMENT_STATE'
         ]);
         this.registerExtensions(extensions);
 
-        this.eventHub.on(this.events.base.SEND_MESSAGE,
-                ([packet]) => this.sendMessage(packet));
+        this.onEvent(this.events.base.SEND_MESSAGE, (packet, documentId) => {
+            packet.id = documentId;
+            this.sendMessage(packet);
+        });
     }
 
     getDocumentState(id) {}
@@ -56,24 +51,28 @@ export class ClientDocumentSync extends BaseDocumentSync {
 
     sendMessage(message) {}
     recvMessage({type, msg, id}) {
-        this.dispatch(this.events.base.RECV_MESSAGE, [type, msg, id]);
+        this.dispatch(this.events.base.RECV_MESSAGE, {
+            type: type, 
+            msg: msg
+        }, id);
     }
 
     connectionEstablished() {
-        this.dispatch(this.events.base.CONNECTION_ESTABLISHED, []);
+        this.dispatch(this.events.base.CONNECTION_ESTABLISHED);
     }
     connectionLost() {
-        this.dispatch(this.events.base.CONNECTION_LOST, []);
+        this.dispatch(this.events.base.CONNECTION_LOST);
     }
 
     connectDocument(id) {
-
+        this.getNewDocumentState(id);
+        this.dispatch(this.events.base.INIT_DOCUMENT_STATE, {}, id);
+        this.sendMessage({
+            type: ['base', 'DOCUMENT_CONNECT'],
+            id: id
+        });
     }
     disconnectDocument(id) {
 
-    }
-
-    getDocumentHandle(id) {
-        return new DocumentHandle(this, id);
     }
 }

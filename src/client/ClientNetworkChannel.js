@@ -5,8 +5,8 @@ var PrimusClient = require('./primusClient');
 class ClientNetworkChannel extends NetworkChannel {
 
     constructor(rpcMethods) {
-        let this_ = this;
         super(rpcMethods);
+        let this_ = this;
 
         this.socket = PrimusClient.connect('/socket');
 

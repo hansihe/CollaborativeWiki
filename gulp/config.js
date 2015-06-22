@@ -54,7 +54,8 @@ module.exports = {
         src: src + "/**/*.js",
         dest: dest + "/js",
         config: {
-            //optional: ["runtime"]
+            optional: ["runtime", "es7.asyncFunctions"]
+            //optional: ["es7.asyncFunctions"]
         }
     },
     test: {

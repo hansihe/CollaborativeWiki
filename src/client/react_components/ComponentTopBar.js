@@ -1,6 +1,8 @@
 var React = require('react');
 var ReactRouter = require('react-router');
 
+var Marty = require('marty');
+
 var Link = require('react-router').Link;
 
 var MixinNavigationUtil = require('./MixinNavigationUtil');
@@ -31,7 +33,6 @@ var RxLifecycleMixin = require('./mixin/RxLivecycleMixin.js');
         }
     }
  *scss*/
-
 var ConnectionStatusComponent = React.createClass({
     mixins: [RxLifecycleMixin],
     contextTypes: {
@@ -39,18 +40,24 @@ var ConnectionStatusComponent = React.createClass({
     },
 
     componentWillMount: function() {
-        console.log(this);
-//        this.rxLifecycle.componentWillUpdate.subscribe(() => console.log("Woohoo, output"));
-        this.context.applicationState.connectionStatus.subscribe(state => this.setState({state: state}));
+        //this.context.applicationState.connectionStatus.subscribe(state => this.setState({state: state}));
     },
 
     render: function() {
-        var color = this.state.state ? "green" : "red";
+        var color = (this.props.status === "CONNECTED") ? "green" : "red";
         return (
             <div className="connection-status">
                 <div className={"icon icon-flash "+color}></div>
             </div>
         );
+    }
+});
+var ConnectionStatusComponentContainer = Marty.createContainer(ConnectionStatusComponent, {
+    listenTo: 'connectionStore',
+    fetch: {
+        status() {
+            return this.app.connectionStore.getConnectionStatus();
+        }
     }
 });
 
@@ -70,7 +77,7 @@ var ActionBarComponent = React.createClass({
                 <TopBarLocationEditComponent/>
                 {editButton}
                 <div className="right-segment">
-                    <ConnectionStatusComponent/>
+                    <ConnectionStatusComponentContainer/>
                 </div>
             </nav>
         )

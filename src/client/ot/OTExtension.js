@@ -1,7 +1,9 @@
-var { BaseExtension } = require('./DocumentSync');
+var { ClientExtension } = require('./DocumentSync');
 var ot = require('ot');
 
-export default class OTExtension extends BaseExtension {
+var { OTStates } = require('./OTHelpers');
+
+export class OTExtension extends ClientExtension {
     static getName() {
         return 'ot';
     }
@@ -19,31 +21,30 @@ export default class OTExtension extends BaseExtension {
             apply: operation => this.applyOperation(operation)
         };
 
+        console.log(this);
+
         this.bindEvent(this.allEvents.base.RECV_MESSAGE, this.recvMessage);
         this.bindEvent(this.allEvents.base.INIT_DOCUMENT_STATE,
                 this.initDocumentState);
         this.bindEvent(this.allEvents.initialState.INITIAL_STATE_RECEIVED, 
-                this.initialState);
+                this.initialStateReceived);
     }
-    initDocumentState(id) {
+    initDocumentState(data, id) {
         let state = this.getDocumentState(id);
 
         state.otState = OTStates.synchronized;
-        state.editable = false;
-        state.text = "";
+        this.setEditable(id, false);
+        this.replaceText(id, "");
         state.revision = -1;
         state.outstanding = null;
         state.buffer = null;
     }
-    initialStateReceived(id, data) {
+    initialStateReceived(data, id) {
         let state = this.getDocumentState(id);
 
-        state.text = data.text;
+        this.replaceText(id, data.text);
         state.revision = data.revision;
-        state.editable = true;
-
-        this.dispatch(this.events.REPLACE_TEXT, id, data.text);
-        this.dispatch(this.events.EDITABLE, id, true);
+        this.setEditable(id, true);
     }
     applyClientOperation(state, operation) {
         this.applyOTActions(OTHelpers.applyClient(
@@ -89,7 +90,8 @@ export default class OTExtension extends BaseExtension {
             throw "invalid ot action: " + action[0];
         }
     }
-    recvMessage(message) {
+    recvMessage(message, id) {
+        let state = this.getDocumentState(id);
         switch (message.type) {
             case "op": {
                 return this.recvOp(state, message);
@@ -98,5 +100,22 @@ export default class OTExtension extends BaseExtension {
                 return this.recvAck(state);
             }
         }
+    }
+
+    replaceText(id, text) {
+        let state = this.getDocumentState(id);
+
+        state.text = text;
+        this.dispatch(this.events.REPLACE_TEXT, {
+            text: text
+        }, id);
+    }
+    setEditable(id, editable) {
+        let state = this.getDocumentState(id);
+
+        state.editable = editable;
+        this.dispatch(this.events.EDITABLE, {
+            editable: editable
+        }, id);
     }
 }

@@ -9,6 +9,33 @@ var CodeMirrorUserSelectionManager = require('../codeMirrorUserSelectionManager'
 
 require('codemirror/mode/markdown/markdown');
 
+var { provideDocumentHandle } = require('./ContainerDocument');
+
+var codemirrorOptions = {
+    mode: 'markdown',
+    theme: 'neat',
+    lineNumbers: false,
+    lineWrapping: true
+};
+
+class CodeMirrorDocumentEditor extends React.Component {
+    constructor(props, context) {
+        super(props, context);
+
+    }
+
+    render() {
+        return (
+            <div className="codemirror-container" ref="container" style={this.props.style}></div>
+        );
+    }
+
+    componentDidMount() {
+        this.editor = CodeMirror(this.refs.container.getDOMNode(), codemirrorOptions);
+        this.registerHandler();
+    }
+}
+
 
 var CodeMirrorDocumentEditor = React.createClass({
     mixins: [React.PureRenderMixin, DocumentUseMixin],

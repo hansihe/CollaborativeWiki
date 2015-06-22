@@ -9,6 +9,7 @@ var dnode = require('dnode');
 var util = require('../shared/util');
 var Rx = require('rx');
 require('rx-react');
+
 function ConnectionState(stream) {
     var streamEndObservable = Rx.Observable.fromEvent(stream, 'end');
 
@@ -77,21 +78,34 @@ function ConnectionState(stream) {
 
     var this_ = this;
     this.dm2 = stream.substream('dm2');
-    this.dm2.on('data', function(message) {
-        let ext = message.type[0];
-        let endpoint = message.type[1];
+
+    async function dm2InData(message) {
         console.log("InMessage", message);
 
+        let ext = message.type[0];
+        let endpoint = message.type[1];
+
+        let id = message.id;
+
         switch (ext) {
-            case "initialState": {
+            case "base": {
                 switch (endpoint) {
-                    case "GET_INITIAL_STATE": {
+                    case "DOCUMENT_CONNECT": {
+                        var document = documentServerManager.getDocumentServer(id);
+
+                        document.documentEvent.on(message => {
+                            console.log(message);
+                            this_.dm2.write(message);
+                        });
+
+                        var initialState = await document.dal.getInitialDocumentData(id);
                         this_.dm2.write({
                             type: ["initialState", "INITIAL_STATE"],
                             msg: {
-                                woo: "test"
+                                revision: initialState.revision,
+                                text: initialState.document
                             },
-                            id: "noooo"
+                            id: id
                         });
                         break;
                     }
@@ -99,6 +113,10 @@ function ConnectionState(stream) {
                 break;
             }
         }
+    }
+
+    this.dm2.on('data', function(message) {
+        dm2InData(message).catch(err => console.error(err));
     });
     
     stream.on('end', function() {

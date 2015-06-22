@@ -6,6 +6,8 @@ var DALInterface = require('./Interface');
 
 class Redis extends DALInterface {
     constructor() {
+        super();
+
         this.client = services.redisClient;
 
         this.propertyNames = {

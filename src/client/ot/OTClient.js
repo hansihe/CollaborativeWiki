@@ -107,6 +107,8 @@ class OTClient {
 
 class SImplOTClient extends OTClient {
     constructor(revision) {
+        super();
+
         this.state = states.synchronized;
 
         this.revision = revision;
